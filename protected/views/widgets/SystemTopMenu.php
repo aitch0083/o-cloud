@@ -36,7 +36,7 @@ class SystemTopMenu extends AppWidget{
 			throw new Exception('views.widgets.SystemTopMenu can\'t handle empty record set!' );
 		}
 
-		echo '<nav class="navbar navbar-default navbar-static-top" role="navigation">';
+		echo '<nav class="navbar navbar-default affix-menu" role="navigation" data-spy="affix" data-offset-top="60" data-offset-bottom="200">';
  		echo ' <div class="container-fluid">';//container for the system menu
 
  		//<!-- Brand and toggle get grouped for better mobile display -->

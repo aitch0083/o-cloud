@@ -30,6 +30,7 @@ class WorkspaceController extends Controller{
 	public function actionIndex(){
 
 		$user = Yii::app()->user->getState('user_rec');
+		$staffRecord = Yii::app()->user->getState('staff_record');
 		$companyGroup = Yii::app()->user->getState('company_group');
 
 		//fetch menu items via user:
@@ -37,8 +38,6 @@ class WorkspaceController extends Controller{
 		$topMenuItems = $menuModel->getMenuItems($user['Id'], 1);//type 1
 		//$sideMenuItems = $menuModel->getMenuItems($user['Id'], 2, $findKids=true, $companyGroup);//type 2
 
-		$this->render('index', compact(array('topMenuItems', 
-											 //'sideMenuItems'
-									   )));
+		$this->render('index', compact('staffRecord', 'topMenuItems'));
 	}
 }

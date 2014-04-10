@@ -128,13 +128,13 @@ class User extends CActiveRecord{
 	}
 
 	public function getStaffRec($uNumber){
-		$connection = Yii::app()->db;
+		$connection = Yii::app()->ocdb;
 		$command = $connection->createCommand('SELECT 
-			A.Name, A.ExtNo, B.Name AS Branch, C.WorkNote, C.WorkTime, D.CShortName 
-			FROM staffmain A
-			LEFT JOIN branchdata B ON B.Id=A.BranchId 
-			LEFT JOIN jobdata C ON C.Id=A.JobId 
-			LEFT JOIN companys_group D ON D.cSign=A.cSign
+			A.Name, A.ExtNo, A.BranchId, B.Name AS Branch, C.WorkNote, C.WorkTime, D.CShortName 
+			FROM datapub_staffmain A
+			LEFT JOIN oc_departments B ON B.id=A.BranchId 
+			LEFT JOIN datapub_jobdata C ON C.Id=A.JobId 
+			LEFT JOIN datapub_companys_group D ON D.cSign=A.cSign
 			WHERE A.Number=:unumber ORDER BY A.Id LIMIT 1');
 		$command->bindParam('unumber', $uNumber, PDO::PARAM_INT);
 		return $command->queryRow();

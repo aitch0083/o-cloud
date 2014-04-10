@@ -20,6 +20,8 @@ return array(
 		'application.components.*',
 	),
 
+	'theme'=>'classic',
+
 	'modules'=>array(
 		// uncomment the following to enable the Gii tool
 		'gii'=>array(
@@ -28,6 +30,9 @@ return array(
 			// If removed, Gii defaults to localhost only. Edit carefully to taste.
 			'ipFilters'=>array($_SERVER['REMOTE_ADDR'])
 		),
+		'ticket'=>array(
+			'class'=>'application.modules.ticket.TicketModule'
+		)
 	),
 
 	// application components
@@ -45,6 +50,14 @@ return array(
 				'<controller:\w+>/<action:\w+>'=>'<controller>/<action>',
 			),
 		),
+		'clientScript'=>array(
+            'packages'=>array(
+                'jquery'=>array(
+                    'baseUrl'=>'//ajax.googleapis.com/ajax/libs/jquery/1/',
+                    'js'=>array('jquery.min.js'),
+                )
+            ),
+        ),
 		//'db'=>array(
 		//	'connectionString' => 'sqlite:'.dirname(__FILE__).'/../data/testdrive.db',
 		//),
@@ -69,6 +82,15 @@ return array(
 		'dbOut'=>array(//data_out <=> d3
 			'class' => 'CDbConnection',
 			'connectionString' => 'mysql:host=localhost;dbname=data_out',
+			'emulatePrepare' => true,
+			'username' => 'yii_web',
+			'password' => 'yii_webpass_20140317',
+			'charset' => 'utf8',
+			'enableProfiling' => true
+		),
+		'ocdb'=>array(//data_out <=> d3
+			'class' => 'CDbConnection',
+			'connectionString' => 'mysql:host=localhost;dbname=oc_db',
 			'emulatePrepare' => true,
 			'username' => 'yii_web',
 			'password' => 'yii_webpass_20140317',
@@ -103,5 +125,6 @@ return array(
 	'params'=>array(
 		// this is used in contact page
 		'adminEmail'=>'aitch@ozaki.com.tw',
+		'mcSalt'=>'OzakiOCloud20140409McCryptSalt'
 	),
 );

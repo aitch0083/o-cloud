@@ -14,12 +14,13 @@ $this->pageTitle=Yii::app()->name;
 					)); 
 	  $this->widget('widgets.SystemLeftMenu',
 	  				array(
+	  					'staffRecord'=>$staffRecord
 	  					//'items'=>$sideMenuItems
 	  				));
 ?>
 
 <div id="page-wrapper">
-	<iframe class="autoHeight" src="/order/sales" frameborder="0" scrolling="no"></iframe>
+	<iframe id="workspace" class="autoHeight" src="/order/sales" frameborder="0" scrolling="no"></iframe>
 </div>
 
 

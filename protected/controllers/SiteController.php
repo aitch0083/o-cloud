@@ -20,6 +20,17 @@ class SiteController extends Controller
 		);
 	}
 
+	public function filters(){
+		return array(
+            array(
+                'application.extensions.html_compressor.ECompressHtmlFilter',
+                'gzip'            => (YII_DEBUG ? false : true),
+                'doStripNewlines' => (YII_DEBUG ? false : true),
+                'actions' => '*'
+            ),
+        );
+	}
+
 	/**
 	 * This is the default 'index' action that is invoked
 	 * when an action is not explicitly requested by users.

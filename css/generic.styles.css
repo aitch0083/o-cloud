@@ -2,12 +2,43 @@ iframe{
     width:100%;
 }
 
+select.form-control{
+    width: 15% !important;
+}
+
 .wrapper{
 	width: 100%;
 }
 
+.loading-jar-bg{
+    background: url(/images/jar-loading.gif) no-repeat;
+    background-position:center center;
+    min-height: 300px;
+}
+
+.arrow {
+    float: right;
+}
+
+.affix-menu{
+    width: 100%;
+    z-index: 200;
+}
+
+.ajax-combo{
+    margin-right: 3px;
+}
+
+.form-group{
+    margin-bottom: 5px;
+}
+
 .top-buffer{
 	margin-top: 30px;
+}
+
+.summernote {
+    min-height: 300px;
 }
 
 .sidebar-search {
@@ -15,15 +46,11 @@ iframe{
 }
 
 .navbar{
-	margin-bottom: 0px;
+	margin-bottom: 0px !important;
 }
 
 .navbar .form-group{
     margin-right: 5px;
-}
-
-.navbar-static-side ul li {
-	border-bottom: 1px solid #e7e7e7;
 }
 
 .navbar-static-side {
@@ -36,6 +63,18 @@ iframe{
     margin: 2px !important;
 }
 
+.text-danger {
+    color: #a94442 !important;
+}
+
+.text-success {
+    color: #3c763d !important;
+}
+
+.highlight-bg {
+    background-color: #FFFF88;
+}
+
 #ui-datepicker-div{
     z-index: 100 !important;
 }
@@ -44,6 +83,7 @@ iframe{
     padding: 1px;
     min-height: 568px;
     background-color: #fff;
+    border-bottom: 1px solid #e7e7e7;
 }
 
 @media(min-width:768px) {
@@ -51,7 +91,7 @@ iframe{
         position: inherit;
         margin: 0 0 0 200px;
         padding: 1px;
-        min-height: 1300px;
+        min-height: 100%;
         border-left: 1px solid #e7e7e7;
     }
 }

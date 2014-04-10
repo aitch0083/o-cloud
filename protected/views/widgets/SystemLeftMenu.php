@@ -7,6 +7,7 @@ class SystemLeftMenu extends AppWidget{
 	public $htmlOptions = array();
 
 	public $items = array();
+    public $staffRecord = array();
 
 	public function init(){
 		if(!isset($this->htmlOptions['id']))
@@ -43,10 +44,21 @@ class SystemLeftMenu extends AppWidget{
                      </li>';
         //Dashboard
         $optHtml .= '<li>
-                        <a href="#" class="menuBtn" cmd="changeWorkspace" cmdVal="/workspace/">'.$this->icon('dashboard').' Dashboard</a>
+                        <a href="#" class="menuBtn" cmd="changeWorkspace" cmdVal="">'.$this->icon('dashboard').' Dashboard</a>
                     </li>';
 	    $optHtml .= '<li>
-                        <a href="#" class="menuBtn" cmd="changeWorkspace" cmdVal="/workspace/">'.$this->icon('stats').' Sales Records</a>
+                        <a href="#" class="menuBtn" cmd="changeWorkspace" cmdVal="/order/sales">'.$this->icon('stats').' Sales Records</a>
+                    </li>';                    
+        $optHtml .= '<li>
+                        <a href="#">'.$this->icon('list-alt').' Projects <span class="fa arrow"></span></a>
+                        <ul class="nav nav-second-level collapse in" style="height: auto;">
+                            <li>
+                                <a href="#" class="menuBtn" cmd="changeWorkspace" cmdVal="/ticket/default/index?fromDepartmentId='.$this->staffRecord['BranchId'].'">'.$this->icon('chevron-right').Utils::e('To Others', false).'</a>
+                            </li>
+                            <li>
+                                <a href="#" class="menuBtn" cmd="changeWorkspace" cmdVal="/ticket/default/index?departmentId='.$this->staffRecord['BranchId'].'">'.$this->icon('chevron-right').Utils::e('For My Team', false).'</a>
+                            </li>
+                        </ul>
                     </li>';                    
         //Iterate the items
 
