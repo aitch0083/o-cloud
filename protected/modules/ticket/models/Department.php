@@ -4,6 +4,7 @@ class Department extends CActiveRecord{
 
 	public static $db = null;
 	private static $targetDB = 'ocdb';
+        public $name = '';
 
 	/**
 	 * @return resource target database conection
