@@ -10,6 +10,7 @@ class Project extends CActiveRecord{
 	const OP_DECLINE = 'DECLINE';
 	const OP_SUSPEND = 'OP_SUSPEND';
 	const OP_CANCEL = 'OP_CANCEL';
+	const OP_REVIEW = 'OP_REVIEW';
 
 	/**
 	 * @return resource target database conection
