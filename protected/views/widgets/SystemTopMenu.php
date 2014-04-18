@@ -52,7 +52,8 @@ class SystemTopMenu extends AppWidget{
 
         //<!-- Collect the nav links, forms, and other content for toggling -->
     	echo '<div class="navbar-collapse collapse" id="bs-example-navbar-collapse-1" style="height: 1px;">'; //menu content
-        if(count($this->items) > 0){
+        //if(count($this->items) > 0){
+        if(false){
         	echo CHtml::openTag('ul', array('class'=>'nav navbar-nav')), chr(10);
         	foreach($this->items as $idx => $item){
         		if(isset($item['children']) && count($item['children']) > 0){

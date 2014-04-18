@@ -17,7 +17,7 @@ class Department extends CActiveRecord{
 				self::$db->setActive(true);
 				return self::$db;
 			}else{
-				throw new CDbException(Yii::t('yii', 'Unable to connect to DB:['.self::$targetDB.']'));
+				throw new CDbException(Yii::t('yii', 'Unable to connect to DB:[{db}]', array('db', self::$targetDB)));
 			}
 		}
 	}
@@ -54,6 +54,12 @@ class Department extends CActiveRecord{
 			'city' => Yii::t('yii', '城市'),
 			'name' => Yii::t('yii', '名稱'),
 		);
+	}
+
+	public function getAll(){
+		$command = self::$db->createCommand()->select('id, parent_id, name, is_open')->from($this->tableName());
+
+		return $command->queryAll();
 	}
 
 	public function getMaxLevel(){
@@ -104,8 +110,7 @@ class Department extends CActiveRecord{
 		$realMaxLevel = $this->getMaxLevel();
 		$maxLayer = $maxLayer >= $realMaxLevel ? $realMaxLevel : $maxLayer;
 
-		$command = self::$db->createCommand('SELECT level FROM '.$this->tableName().' Department WHERE id=:id LIMIT 1');
-		$command->bindParam(':id', $departmentId);
+		$command = self::$db->createCommand('SELECT level FROM '.$this->tableName().' Department WHERE id IN ('.(is_array($departmentId) ? implode(',', $departmentId) : $departmentId).') LIMIT 1');
 		$deptLevel = $command->queryScalar();
 
 		$layersToGo = $maxLayer - $deptLevel;
@@ -114,7 +119,7 @@ class Department extends CActiveRecord{
 			return array($departmentId);
 		}else{
 			$command = self::$db->createCommand('SELECT id, level FROM '.$this->tableName().' Department WHERE parent_id=:id');
-			$command->bindParam(':id', $departmentId);
+			$command->bindValue(':id', (is_array($departmentId) ? implode(',', $departmentId) : $departmentId));
 			$kids = $command->queryAll();
 			if($kids){
 				for($idx = 0 ; $idx < count($kids) ; $idx++){

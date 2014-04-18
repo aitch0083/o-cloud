@@ -8,6 +8,12 @@ class DefaultController extends Controller{
 	 */
 	public $layout='//layouts/workspace_item';
 
+	protected $restrictedAreas = array( 
+		//only department manager can do the following actions
+		'decline'=>4,
+		'edit'=>4
+	);
+
 	/**
 	 * @return array action filters
 	 */
@@ -33,15 +39,24 @@ class DefaultController extends Controller{
 		);
 	}
 
+	public function beforeAction($action){
+		if(parent::beforeAction($action)){
+			$staffRec = Yii::app()->user->getState('staff_record');
+			return $this->restrictActions($action->id, $staffRec['auth_code']);
+		}
+		return false;
+	}
+
 	public function actionIndex($isDone=0, $isPublished=0, $page=0, $pageSize=30,
 								$startDate='', $endDate='', $departmentId='', $fromDepartmentId='',
 								$sortField='Project.id', $sortDir='DESC',
-								$keywords='', $operator='and'){
+								$keywords='', $statusCode='ALL', $operator='and',
+								$rendertype='usual'){
 
 		//load records
 		$project = new Project();
-		$records = $project->getAll($isDone, $isPublished, $page, $pageSize, $startDate, $endDate, $departmentId, $fromDepartmentId, $sortField, $sortDir, $keywords, $operator);
-		$count = $project->getAll($isDone, $isPublished, $page, $pageSize, $startDate, $endDate, $departmentId, $fromDepartmentId, $sortField, $sortDir, $keywords, $operator, $counting=true);
+		$records = $project->getAll($isDone, $isPublished, $page, $pageSize, $startDate, $endDate, $departmentId, $fromDepartmentId, $sortField, $sortDir, $statusCode, $keywords, $operator);
+		$count = $project->getAll($isDone, $isPublished, $page, $pageSize, $startDate, $endDate, $departmentId, $fromDepartmentId, $sortField, $sortDir, $statusCode, $keywords, $operator, $counting=true);
 
 		$pageNum = ceil( $count / $pageSize );
 
@@ -61,12 +76,21 @@ class DefaultController extends Controller{
 		$runningDepartments = $department->getOpendList();
 
 		$isDone = intval($isDone);//convert boolean value
+		$isPublished = intval($isPublished);//convert boolean value
 
-		$this->render('index', compact('isDone', 'isPublished', 'page', 'pageSize',
-									   'startDate', 'endDate',
-									   'sortField', 'sortDir', 'keywords',
-									   'records', 'count', 'pageNum', 
-									   'columns', 'runningDepartments'));
+		$prefix = '/'.$this->module->id.'/'.$this->id;
+		$editFormAction = $prefix.'/edit';
+		$declineFormAction = $prefix.'/decline';
+
+		$renderPage = $rendertype === 'usual' ? 'index' : 'excel_style';
+
+		$this->render($renderPage, compact('isDone', 'isPublished', 'page', 'pageSize',
+										   'startDate', 'endDate',
+										   'sortField', 'sortDir', 'statusCode', 'keywords',
+										   'records', 'count', 'pageNum', 
+										   'columns', 'runningDepartments', 'fromDepartmentId',
+										   'editFormAction', 'declineFormAction',
+										   'rendertype'));
 	}
 
 	public function actionAdd($startLevel=1){
@@ -83,9 +107,13 @@ class DefaultController extends Controller{
 				return;
 			}
 			$form = $_POST;
+			$path = implode(',', $form['department']);
 			$form['department_id'] = array_pop($form['department']);
 			$form['user_id'] = $user['Id'];
 			$form['finished_date'] = '0000-00-00';
+			if(isset($form['belongs_to_me']) && $form['belongs_to_me'] == '1'){
+				$form['contact_id'] = $user['Id'];
+			}
 			$deptId = $form['department_id'];
 			$dept = new Department();
 			$contact = $dept->getContact($deptId);
@@ -99,8 +127,11 @@ class DefaultController extends Controller{
 			$project->from_department_id = $staffRecord['BranchId'];//Creator's Deparment
 			$project->created = $now;
 			$project->modified = $now;
-			
+			$project->dept_path = $path;
+			$project->note = $form['note'];
+
 			if($project->save()){
+				$project->writeLog($user['Id'], Project::OP_CREATE, $project->primaryKey);
 				$dbAccessResult = array(
 					'result' => true,
 					'redirect' => '/'.$this->module->id.'/'.$this->id,
@@ -148,6 +179,10 @@ class DefaultController extends Controller{
 			$projectAddUrl 			  = $prefix.'/add';
 			$accessToken = $this->getAccessToken();
 
+			//fetch main project types
+			$project = new Project();
+			$projectTypes = $project->getProjectTypes();
+
 			$crumbs = array(
 				array( 'link'=>$prefix, 'label'=>Utils::e('Project List', false) ),
 				array( 'link'=>$addAction, 'label'=>Utils::e('Init Project', false) ),
@@ -157,8 +192,60 @@ class DefaultController extends Controller{
 									     'isAjax', 'user', 'searchAction', 'addAction',
 									     'getMenuAction', 'getContactAction', 'checkProjectNameDupUrl',
 									     'getCategoriesByDeptIdUrl', 'checkDeptOpenUrl', 'projectAddUrl',
-									     'accessToken', 'crumbs'));
+									     'accessToken', 'crumbs', 'projectTypes'));
 		}
+	}
+
+	public function actionEdit(){
+		$id = $this->decode(Yii::app()->request->getPost('project_id'));
+
+		$project = Project::model()->findByPk($id);
+		$contact = $project->contact->staff;
+		$accessToken = $this->getAccessToken();
+		$prefix = '/'.$this->module->id.'/'.$this->id;
+		$editAction = $prefix.'/'.$this->action->id;
+
+		//fetch main project types
+		$projectModel = new Project();
+		$projectTypes = $projectModel->getProjectTypes();
+
+		$projectCategories = $this->actionGetCategories(array($project['department_id']), false);
+
+		$department = new Department();
+		$departments = $department->getAll();
+		$departments = Utils::buildTree($departments);
+		$deptPath = explode(',', $project['dept_path']);
+
+		$crumbs = array(
+				array( 'link'=>$prefix, 'label'=>Utils::e('Project List', false) ),
+				array( 'link'=>$editAction, 'label'=>Utils::e('Edit Project', false) ),
+			);
+
+		$this->render('edit', compact('project', 'accessToken', 'editAction', 'crumbs', 
+									  'projectTypes', 'projectCategories', 'departments', 
+									  'deptPath', 'contact'));
+	}
+
+	public function actionDecline(){
+		
+		if(!Yii::app()->request->isAjaxRequest){
+			return;
+		}
+
+		$id = $this->decode(Yii::app()->request->getPost('project_id'));
+
+		$project = Project::model()->findByPk($id);
+		//$project->findByPk($id);
+		$saveRlt = $project->updateByPk($id, array('is_declined'=>1));
+		$rlt = array(
+			'rlt' => $saveRlt,
+			'msg' => $saveRlt ?  
+					 Utils::e('Project ['.$project['title'].'] is declined. You can find this item under declined projects.', false): 
+					 Utils::e('Unable to decline Proejct! Contact Admin: {admin}. Details:{details}', false,
+									array('{admin}'=>Yii::app()->params['adminEmail'], '{details}'=>print_r($project->getErrors(), true)))
+		);
+
+		echo json_encode($rlt);
 	}
 
 	/**
@@ -231,7 +318,7 @@ class DefaultController extends Controller{
 	 * @param string $deptId department id
 	 * @return array category items for specific department
 	 */
-	public function actionGetCategories(array $deptIds){
+	public function actionGetCategories(array $deptIds, $return=false){
 
 		if(!Yii::app()->request->isAjaxRequest){
 			return;
@@ -240,6 +327,10 @@ class DefaultController extends Controller{
 		$project = new Project();
 		$deptId = array_pop($deptIds);
 		$categories = $project->getProjectCategories($deptId);
+
+		if($return){
+			return $categories;
+		}
 
 		$this->renderPartial('project_category_list', compact('categories'));
 	}

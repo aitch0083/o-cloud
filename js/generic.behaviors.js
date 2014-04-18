@@ -19,10 +19,28 @@ jQuery.showDialog = function(msg, title, shownCB, hiddenCB){
 	$('#SystemDialog').modal('show');
 };
 jQuery.doAdjHeight = function DoAdjHeight() {
-        var theFrame = $("iframe", parent.document.body);
-        theFrame.each(function () {
-            $(this).height($(document.body).height() + 35);
-        });
+    var theFrame = $("iframe", parent.document.body);
+    theFrame.each(function () {
+        $(this).height($(document.body).height() + 35);
+    });
+};
+jQuery.confirm = function(msg, title, yesCB, highlightClass, iconClass){
+	highlightClass = highlightClass || 'ui-state-highlight';
+	iconClass = iconClass || 'ui-icon ui-icon-info';
+	$('#ConfirmDialogContent').html('<span class="'+iconClass+'" style="display:inline-block"></span> '+msg).addClass(highlightClass);
+	$('#ConfirmDialog').dialog({
+		title:title, 
+		buttons:{
+			'Yes':function(){
+				yesCB();
+				$(this).dialog('close');
+			},
+			'No':function(){
+				$(this).dialog('close');
+			}
+		}
+	});
+	$('#ConfirmDialog').dialog('open');
 };
 
 $(document).ready(function(){
@@ -64,7 +82,11 @@ $(document).ready(function(){
 		}
 	});
 
-	$('#side-menu').metisMenu();
+	$('#side-menu').metisMenu({toggle: false});
+
+	$('.tipinfos').tooltip({container:'body'})
+
+	$('#ConfirmDialog').dialog({autoOpen:false, width: 300, modal: true});
 
     $(function () {
         $.doAdjHeight();

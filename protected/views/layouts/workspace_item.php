@@ -18,6 +18,7 @@
     
     <?php echo $content; ?>
 
+    <?php $this->widget('widgets.SystemConfirmDialog'); ?>
     <?php $this->widget('widgets.SystemModalDialog',array()); ?>
 
     <input type="hidden" id="Controller" value="<?php echo $this->id; ?>" />

@@ -5,6 +5,12 @@ class Project extends CActiveRecord{
 	public static $db = null;
 	private static $targetDB = 'ocdb';
 
+	const OP_CREATE = 'CREATE';
+	const OP_ACCEPT = 'ACCEPT';
+	const OP_DECLINE = 'DECLINE';
+	const OP_SUSPEND = 'OP_SUSPEND';
+	const OP_CANCEL = 'OP_CANCEL';
+
 	/**
 	 * @return resource target database conection
 	*/
@@ -17,7 +23,7 @@ class Project extends CActiveRecord{
 				self::$db->setActive(true);
 				return self::$db;
 			}else{
-				throw new CDbException(Yii::t('yii', 'Unable to connect to DB:['.self::$targetDB.']'));
+				throw new CDbException(Yii::t('yii', 'Unable to connect to DB:[{db}]', array('db', self::$targetDB)));
 			}
 		}
 	}
@@ -41,8 +47,8 @@ class Project extends CActiveRecord{
 		// will receive user inputs.
 		return array(
 			array('department_id, category_id, user_id, title, purpose, 
-				   demands, acceptance, apply_range, verifiers, expecting_date, finished_date,
-				   note, contact_id, rewards', 'required')
+				   demands, acceptance, apply_range, verifiers, expecting_date, finished_date, estimated_profit,
+				   contact_id, rewards', 'required')
 		);
 	}
 
@@ -53,6 +59,11 @@ class Project extends CActiveRecord{
 		// NOTE: you may need to adjust the relation name and the related
 		// class name for the relations automatically generated below.
 		return array(
+			'contact'=>array(
+				self::BELONGS_TO,
+				'User', 
+				'contact_id'
+			)//eo contact
 		);
 	}
 
@@ -66,10 +77,15 @@ class Project extends CActiveRecord{
 		);
 	}
 
+	public static function model($className=__CLASS__){
+    	return parent::model($className);
+    }
+
 	public function getFields(){
-		return 'Project.id, Project.department_id, Project.category_id, Project.user_id, Project.title, Project.purpose, Project.demands, 
-		        Project.acceptance, Project.apply_range, Project.verifiers, Project.expecting_date,
-			    Project.finished_date, Project.rewards, Project.note, Project.is_published, Project.is_done, Project.sign_proof, 
+		return 'Project.id, Project.department_id, Project.dept_path, Project.category_id, Project.user_id, Project.title, Project.status, 
+		        Project.purpose, Project.demands, Project.acceptance, Project.apply_range, Project.verifiers, Project.expecting_date,
+			    Project.finished_date, Project.rewards, Project.note, Project.sign_proof, 
+			    Project.is_published, Project.is_done, Project.is_suspend, Project.is_declined, Project.is_canceled,
 			    Project.task_no, Project.contact_id, Project.created, Project.modified';
 	}
 
@@ -94,6 +110,15 @@ class Project extends CActiveRecord{
 		return $command->queryAll();
 	}
 
+	public function getProjectTypes(){
+		$command = self::$db->createCommand()
+		                    ->select('id, name, verify_path')
+		                    ->from('oc_project_types')
+		                    ->where('1')
+		                    ->order('id', 'asc');
+		return $command->queryAll();
+	}
+
 	public function getProjectCategories($departmentId){
 		$command = self::$db->createCommand()
 							->select('id, department_id, title')
@@ -102,7 +127,7 @@ class Project extends CActiveRecord{
 		return $command->queryAll();
 	}
 
-	public function getAll($isDone, $isPublished, $page, $pageSize, $startDate, $endDate, $departmentId, $fromDepartmentId, $sortField, $sortDir, $keywords, $operator='and', $counting=false){
+	public function getAll($isDone, $isPublished, $page, $pageSize, $startDate, $endDate, $departmentId, $fromDepartmentId, $sortField, $sortDir, $statusCode, $keywords, $operator='and', $counting=false){
 
 		if(!in_array($operator, $this->getOperators())){
 			throw new Expcetion('Operator ['.$operator.'] is not available!');
@@ -110,7 +135,10 @@ class Project extends CActiveRecord{
 
 		$command = self::$db->createCommand();
 
-		$where = array();//conditions
+		$where = array(
+			'Project.is_declined=0',
+			'Project.is_canceled=0',
+		);//conditions
 		$params = array();//bind parameters
 
 		if($isDone !== ''){
@@ -137,13 +165,18 @@ class Project extends CActiveRecord{
 			//find child department ids
 			$department = new Department();
 			$ids = $department->findKids($departmentId, 4);//4 layers only
-			
+
 			$where[] = 'Project.department_id in ('.implode(',', $ids).')';
 		}
 
 		if($fromDepartmentId !== ''){
 			$where[] = 'Project.from_department_id=:from_department_id';
 		    $params[':from_department_id'] = $fromDepartmentId;	
+		}
+
+		if($statusCode !== '' && $statusCode !== 'ALL'){
+			$where[] = 'Project.status=:status';
+		    $params[':status'] = $statusCode;		
 		}
 
 
@@ -176,5 +209,14 @@ class Project extends CActiveRecord{
 		}
 
 		return $counting ? $command->queryScalar() : $command->queryAll();
+	}
+
+	public function writeLog($operatorId, $operation, $projectId){
+		$command = self::$db->createCommand('INSERT INTO oc_project_logs (id, operator, operation, project_id, created) 
+			                                   VALUES(null, :operator, :operation, :project_id, NOW())');
+		$command->bindParam(':operator', $operatorId);
+		$command->bindParam(':operation', $operation);
+		$command->bindParam(':project_id', $projectId);
+		return $command->execute();
 	}
 }

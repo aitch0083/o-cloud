@@ -16,6 +16,11 @@ select.form-control{
     min-height: 300px;
 }
 
+.record-dl{
+    float: left;
+    margin-right: 10px;
+}
+
 .arrow {
     float: right;
 }
@@ -73,6 +78,15 @@ select.form-control{
 
 .highlight-bg {
     background-color: #FFFF88;
+}
+
+.ui-dialog .ui-dialog-buttonpane {
+    margin-top: 0px !important;
+    padding: 0px !important;
+}
+
+.badge-danger{
+    background: red;
 }
 
 #ui-datepicker-div{

@@ -32,12 +32,12 @@ class User extends CActiveRecord{
 		if(self::$dbIn !== null){
 			return self::$dbIn;
 		}else{
-			self::$dbIn = Yii::app()->dbIn;
+			self::$dbIn = Yii::app()->ocdb;
 			if(self::$dbIn instanceof CDbConnection){
 				self::$dbIn->setActive(true);
 				return self::$dbIn;
 			}else{
-				throw new CDbException(Yii::t('yii', 'Unable to connect to DB:['.self::$targetDB.']'));
+				throw new CDbException(Yii::t('yii', 'Unable to connect to DB:[{db}]', array('db', self::$targetDB)));
 			}
 		}
 	}
@@ -50,7 +50,7 @@ class User extends CActiveRecord{
 	 * @return string associated table name
 	 */
 	public function tableName(){
-		return 'usertable';
+		return 'datain_usertable';
 	}
 
 	/**
@@ -69,6 +69,21 @@ class User extends CActiveRecord{
 		return array(
 			'uName' => Yii::t('yii', 'Useranme'),
 			'uPwd' => Yii::t('yii', 'Password')
+		);
+	}
+
+	/**
+	 * @return array relational rules.
+	 */
+	public function relations(){
+		// NOTE: you may need to adjust the relation name and the related
+		// class name for the relations automatically generated below.
+		return array(
+			'staff'=>array(
+				self::HAS_ONE,
+				'Staff', 
+				array('Number'=>'Number')
+			)//eo contact
 		);
 	}
 
@@ -130,7 +145,7 @@ class User extends CActiveRecord{
 	public function getStaffRec($uNumber){
 		$connection = Yii::app()->ocdb;
 		$command = $connection->createCommand('SELECT 
-			A.Name, A.ExtNo, A.BranchId, B.Name AS Branch, C.WorkNote, C.WorkTime, D.CShortName 
+			A.Name, A.ExtNo, A.BranchId, A.auth_code, B.Name AS Branch, C.WorkNote, C.WorkTime, D.CShortName 
 			FROM datapub_staffmain A
 			LEFT JOIN oc_departments B ON B.id=A.BranchId 
 			LEFT JOIN datapub_jobdata C ON C.Id=A.JobId 

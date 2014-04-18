@@ -10,6 +10,8 @@ return array(
 	'basePath'=>dirname(__FILE__).DIRECTORY_SEPARATOR.'..',
 	'name'=>'O!Cloud',
     'timeZone'=>'Asia/Taipei',
+    'language'=>'zh_tw',
+    'sourceLanguage'=>'zh_tw',
 
 	// preloading 'log' component
 	'preload'=>array('log'),
@@ -17,7 +19,7 @@ return array(
 	// autoloading model and component classes
 	'import'=>array(
 		'application.models.*',
-		'application.components.*',
+		'application.components.*'
 	),
 
 	'theme'=>'classic',
@@ -117,7 +119,11 @@ return array(
                     'report'=>'summary'
 				)*/
 			),
-		)
+		),
+		'messages' => array(
+           'class' => 'CPhpMessageSource',
+           'onMissingTranslation' => array('Ei18n', 'missingTranslation')
+        )
 	),
 
 	// application-level parameters that can be accessed

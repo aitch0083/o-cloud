@@ -25,6 +25,7 @@
 
     <input type="hidden" id="Controller" value="<?php echo $this->id; ?>" />
     <input type="hidden" id="Action" value="<?php echo 'action',ucwords($this->action->id); ?>" />
+    <?php $this->widget('widgets.SystemConfirmDialog'); ?>
     <?php $this->widget('widgets.SystemModalDialog',array()); ?>
   </body>
 </html>

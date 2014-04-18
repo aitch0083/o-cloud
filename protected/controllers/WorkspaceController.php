@@ -38,6 +38,6 @@ class WorkspaceController extends Controller{
 		$topMenuItems = $menuModel->getMenuItems($user['Id'], 1);//type 1
 		//$sideMenuItems = $menuModel->getMenuItems($user['Id'], 2, $findKids=true, $companyGroup);//type 2
 
-		$this->render('index', compact('staffRecord', 'topMenuItems'));
+		$this->render('index', compact('staffRecord', 'topMenuItems', 'staffRecord'));
 	}
 }

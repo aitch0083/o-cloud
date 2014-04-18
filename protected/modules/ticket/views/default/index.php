@@ -12,7 +12,17 @@ $addAction = '/'.$this->module->id.'/'.$this->id.'/add';
 				<input type="hidden" name="page" value="<?php echo $page; ?>"/>
 				<input type="hidden" name="pageSize" value="<?php echo $pageSize; ?>"/>
 				<div class="form-group">
-				    <label><b class="glyphicon glyphicon-plane"></b> <?php echo Yii::t('yii', '專案狀態') ?>: </label>
+				    <label><b class="glyphicon glyphicon-info-sign"></b> <?php echo Yii::t('yii', '狀態') ?>: </label>
+					<select name="statusCode" id="FilterCustomer">
+						<option value="ALL" <?php echo $statusCode === 'ALL' ? 'selected' : ''; ?>>All...</option>
+						<option value="TODO" <?php echo $statusCode === 'TODO' ? 'selected' : ''; ?>>To Do</option>
+						<option value="RUNNING" <?php echo $statusCode === 'RUNNING' ? 'selected' : ''; ?>>Running</option>
+						<option value="REVIEWING" <?php echo $statusCode === 'REVIEWING' ? 'selected' : ''; ?>>Reviewing</option>
+						<option value="DONE" <?php echo $statusCode === 'DONE' ? 'selected' : ''; ?>>Done</option>
+					</select>
+			  	</div>
+				<div class="form-group">
+				    <label><b class="glyphicon glyphicon-plane"></b> <?php echo Yii::t('yii', '完成？') ?>: </label>
 					<select name="isDone" id="FilterCustomer">
 						<option value="0" <?php echo $isDone ? '' : 'selected'; ?>>未完成</option>
 						<option value="1" <?php echo $isDone ? 'selected' : ''; ?>>已完成</option>
@@ -67,38 +77,113 @@ $addAction = '/'.$this->module->id.'/'.$this->id.'/add';
 			  	<div class="btn-group">
 				  	<button class="btn btn-xs btn-default" type="submit"><span class="glyphicon glyphicon-play"></span></button>
 				  	<button class="btn btn-xs btn-primary" type="button" cmd="addRecord" cmdVal="<?php echo $addAction; ?>" target="#workspace" ><b class="glyphicon glyphicon-plus"></b> <?php echo Yii::t('yii', '開新專案'); ?></button>
-				  	<button class="btn btn-xs btn-info <?php echo $isDone === 0 ? 'active' : '' ?>" type="button" cmd="filterRecord" cmdVal="<?php echo $searchAction,'?isDone=0'; ?>" target="#workspace"><?php Utils::icon('plane');Utils::e('To Others'); ?></button>
-				  	<button class="btn btn-xs btn-info <?php echo $isPublished === 0 ? 'active' : '' ?>" type="button" cmd="filterRecord" cmdVal="<?php echo $searchAction,'?isPublished=0'; ?>" target="#workspace"><?php Utils::icon('ok');Utils::e('For My Department'); ?></button>
+				  	<button class="btn btn-xs btn-info <?php echo $isDone === 0 ? '' : 'active' ?>" type="button" cmd="filterRecord" cmdVal="<?php echo $searchAction,'?isDone=0'; ?>" target="#workspace"><?php Utils::icon('plane');Utils::e('Undone'); ?></button>
+				  	<button class="btn btn-xs btn-info <?php echo $isPublished === 0 ? '' : 'active' ?>" type="button" cmd="filterRecord" cmdVal="<?php echo $searchAction,'?isPublished=0'; ?>" target="#workspace"><?php Utils::icon('ok');Utils::e('UnPublished'); ?></button>
 			  	</div>
 			</form>	
 		</div>
 	</div>
 
+	<h4 class="text-info">
+		<?php 
+		    $listTitle = $fromDepartmentId !== '' ? Utils::e('On Going Projects') : Utils::e('My Team\'s Projects');
+		    echo $listTitle;
+		?>
+	</h4>
+
 	<?php if(count($records) > 0): ?>
-		<table id="GridTable" class="table">
+		<table id="GridTable" class="table table-responsive table-condensed table-hover">
 			<thead>
 				<tr>
-					<th><?php Utils::e('Department'); ?></th>
+					<th width="300"><?php Utils::e('Title'); ?></th>
+					<th><?php Utils::e('Dept'); ?></th>
 					<th><?php Utils::e('Type'); ?></th>
-					<th><?php Utils::e('Title'); ?></th>
 					<th><?php Utils::e('Contact'); ?></th>
-					<th><?php Utils::e('Demands'); ?></th>
 					<th><?php Utils::e('Status'); ?></th>
 					<th><?php Utils::e('Expecting'); ?></th>
-					<th><?php Utils::e('Note'); ?></th>
+					<th><?php Utils::e('Actions'); ?></th>
 				</tr>
 			</thead>
 			<tbody>
 				<?php foreach($records as $idx=>$record): ?>
-				<tr>
+				<?php    $recId = $record['id']; ?>
+				<tr class="success target_rec<?php echo $recId; ?>">
+					<td><?php echo $record['title']; ?></td>
 					<td><?php echo $record['department_name']; ?></td>
 					<td><?php echo $record['category_name']; ?></td>
-					<td><?php echo $record['title']; ?></td>
 					<td><?php echo $record['contact_name']; ?></td>
-					<td><?php echo $record['demands']; ?></td>
-					<td><?php echo $record['is_done'] ? 'Published' : 'NAN'; ?></td>
-					<td><?php echo $record['expecting_date']; ?></td>
-					<td><?php echo $record['note']; ?></td>
+					<td>
+						<?php echo Utils::eBadge($record['status']); ?>
+					</td>
+					<td>
+						<?php 
+							  $dateDiff = date_diff(date_create($this->today), date_create($record['expecting_date']));  
+							  echo $record['expecting_date'];
+							  $dayDiff = intval($dateDiff->format('%a'));		
+							  if($dayDiff > 0){
+						  	  	echo Utils::eBadge($dayDiff.' days', true, 'badge-info');
+						  	  }else{
+						  	  	echo Utils::eBadge('DUED!!', true, 'badge-danger');
+						  	  }
+						?>
+					</td>
+					<td>
+						<div class="btn-group">
+							<button class="btn btn-xs btn-info tipinfos" cmd="printRecord" cmdVal="<?php echo $recId; ?>" data-toggle="tooltip" data-placement="bottom" title="<?php Utils::e('Print'); ?>"><?php Utils::icon('print'); ?></button>
+							<button class="btn btn-xs btn-info tipinfos" cmd="viewRecord" cmdVal="<?php echo $recId; ?>" data-toggle="tooltip" data-placement="bottom" title="<?php Utils::e('View'); ?>"><?php Utils::icon('search'); ?></button>
+							<button class="btn btn-xs btn-info tipinfos" cmd="editRecord" cmdVal="<?php echo $recId; ?>" data-toggle="tooltip" data-placement="bottom" title="<?php Utils::e('Edit'); ?>"><?php Utils::icon('edit'); ?></button>
+							<button class="btn btn-xs btn-info tipinfos" cmd="delteRecord" cmdVal="<?php echo $recId; ?>" data-toggle="tooltip" data-placement="bottom" title="<?php Utils::e('Cancel'); ?>"><?php Utils::icon('trash'); ?></button>
+							<?php if(!$record['is_published'] && !$record['is_declined']): ?>
+							<button class="btn btn-xs btn-default tipinfos" cmd="accept_prj" cmdVal="<?php echo $recId; ?>" data-toggle="tooltip" data-placement="bottom" title="<?php Utils::e('Accept'); ?>"><?php Utils::icon('ok'); ?></button>
+							<button class="btn btn-xs btn-danger tipinfos" cmd="decline_prj" cmdVal="<?php echo $recId; ?>" data-toggle="tooltip" data-placement="bottom" title="<?php Utils::e('Decline'); ?>"><?php Utils::icon('remove'); ?></button>
+							<?php endif; ?>
+							<?php if($record['is_published'] && !$record['is_done'] && !$record['is_suspend']): ?>
+							<button class="btn btn-xs btn-warning tipinfos" cmd="suspend_prj" cmdVal="<?php echo $recId; ?>" data-toggle="tooltip" data-placement="bottom" title="<?php Utils::e('Suspend'); ?>"><?php Utils::icon('minus'); ?></button>
+							<?php endif; ?>
+						</div>
+					</td>
+				</tr>
+				<tr class="target_rec<?php echo $recId; ?>">
+					<td colspan="9">
+						<dl class="record-dl">
+							<dt><?php Utils::e('Is Done?'); ?></dt>
+							<dd><?php echo Utils::eLabel($record['is_done'] ? 'Done' : 'Undone', $record['is_done']); ?></dd>
+						</dl>
+						<dl class="record-dl">
+							<dt><?php Utils::e('Is Published?'); ?></dt>
+							<dd><?php echo Utils::eLabel($record['is_published'] ? 'Signed' : 'Not Signed', false); ?></dd>
+						</dl>
+						<dl class="record-dl">
+							<dt><?php Utils::e('Targets'); ?></dt>
+							<dd><?php echo $record['demands']; ?></dd>
+						</dl>
+						<dl class="record-dl">
+							<dt><?php Utils::e('Scope'); ?></dt>
+							<dd><?php echo $record['apply_range']; ?></dd>
+						</dl>
+						<dl class="record-dl">
+							<dt><?php Utils::e('Acceptance Criterions'); ?></dt>
+							<dd><?php echo $record['acceptance']; ?></dd>
+						</dl>
+						<dl class="record-dl">
+							<dt><?php Utils::e('Task'); ?></dt>
+							<dd class="text-center"><?php echo $record['task_no']; ?></dd>
+						</dl>
+						<dl class="record-dl">
+							<dt><?php Utils::e('Rewards'); ?></dt>
+							<dd class="text-center"><?php echo $record['rewards']; ?></dd>
+						</dl>
+						<!-- Action Parameters -->
+						<input type="hidden" id="AcceptProjectMsg<?php echo $recId; ?>" value="<?php Utils::e('Are you sure about accepting this project '.chr(10).'['.$record['title'].']? '.chr(10).'Once accepted, it cannot be reversed!'); ?>" />
+						<input type="hidden" id="DeclineProjectMsg<?php echo $recId; ?>" value="<?php Utils::e('Are you sure about declining this project '.chr(10).'['.$record['title'].']? '.chr(10).'Once declined, it cannot be reversed!'); ?>" />
+						<!-- Action Forms -->
+						<form class="hidden" id="EditProjectActionForm<?php echo $recId; ?>" method="post" action="<?php echo $editFormAction; ?>">
+							<input type="hidden" name="project_id" value="<?php echo Utils::encode($recId); ?>" />
+						</form>
+						<form class="hidden" id="DeclineProjectActionForm<?php echo $recId; ?>" method="post" action="<?php echo $declineFormAction; ?>">
+							<input type="hidden" name="project_id" value="<?php echo Utils::encode($recId); ?>" />
+						</form>
+					</td>
 				</tr>
 				<?php endforeach; ?>
 			</tbody>
@@ -109,7 +194,10 @@ $addAction = '/'.$this->module->id.'/'.$this->id.'/add';
     <div id="GridTablePager" class="pagination">
     	<?php $this->widget('widgets.Paginator', array( 'config'=>array('page'=>$page, 'pageNum'=>$pageNum) )); ?>
     </div> 
+
 </div>
+
+<div id="ModalConfirm"></div>
 
 <!-- Params -->
 <input type="hidden" id="GridTableUrl" value="/ticket/task/read" />

@@ -43,7 +43,7 @@ class StockProduct extends CActiveRecord{
 				self::$db->setActive(true);
 				return self::$db;
 			}else{
-				throw new CDbException(Yii::t('yii', 'Unable to connect to DB:['.self::$targetDB.']'));
+				throw new CDbException(Yii::t('yii', 'Unable to connect to DB:[{db}]', array('db', self::$targetDB)));
 			}
 		}
 	}

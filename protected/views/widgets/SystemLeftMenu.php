@@ -43,12 +43,13 @@ class SystemLeftMenu extends AppWidget{
                         <!-- /input-group -->
                      </li>';
         //Dashboard
-        $optHtml .= '<li>
+        /*$optHtml .= '<li>
                         <a href="#" class="menuBtn" cmd="changeWorkspace" cmdVal="">'.$this->icon('dashboard').' Dashboard</a>
                     </li>';
 	    $optHtml .= '<li>
                         <a href="#" class="menuBtn" cmd="changeWorkspace" cmdVal="/order/sales">'.$this->icon('stats').' Sales Records</a>
-                    </li>';                    
+                    </li>';    
+        */                
         $optHtml .= '<li>
                         <a href="#">'.$this->icon('list-alt').' Projects <span class="fa arrow"></span></a>
                         <ul class="nav nav-second-level collapse in" style="height: auto;">
@@ -57,6 +58,9 @@ class SystemLeftMenu extends AppWidget{
                             </li>
                             <li>
                                 <a href="#" class="menuBtn" cmd="changeWorkspace" cmdVal="/ticket/default/index?departmentId='.$this->staffRecord['BranchId'].'">'.$this->icon('chevron-right').Utils::e('For My Team', false).'</a>
+                            </li>
+                            <li>
+                                <a href="#" class="menuBtn" cmd="changeWorkspace" cmdVal="/ticket/default/index?fromDepartmentId='.$this->staffRecord['BranchId'].'&rendertype=list">'.$this->icon('chevron-right').Utils::e('Detail List', false).'</a>
                             </li>
                         </ul>
                     </li>';                    

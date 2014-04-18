@@ -22,7 +22,7 @@ var DefaultCtrl = {
 		        caption = $('#GridTableCaption').val();
 
 		    DefaultCtrl.scrollTop();
-		    
+
 			//Register event listeners
 	    	$('.btn').on('click', function($event){
 	    		var cmd = $(this).attr('cmd'),
@@ -34,6 +34,38 @@ var DefaultCtrl = {
 	    			case 'filterRecord':
 	    				$event.preventDefault();
 	    				$(parent.document).find(target).attr('src', cmdVal);
+	    				break;
+	    			case 'accept_prj':
+	    				var msg = $('#AcceptProjectMsg'+cmdVal).val();
+	    				$event.preventDefault();
+	    				$.confirm(msg, 'Confirm', function(){
+	    					$('#EditProjectActionForm'+cmdVal).submit();
+	    				}, 'ui-state-highlight', 'ui-icon ui-icon-info');
+	    				break;
+	    			case 'decline_prj':
+	    				var msg = $('#DeclineProjectMsg'+cmdVal).val();
+	    				$event.preventDefault();
+	    				$.confirm(msg, 'Confirm', function(){
+	    					$('#DeclineProjectActionForm'+cmdVal).ajaxSubmit({
+	    						success: function(response, statusText, xhr, $form){
+	    							try{
+	    								response = $.parseJSON(response);
+	    								if(response.rlt){
+	    									$.showDialog(response.msg, null, null, function(){
+	    										$('tr.target_rec'+cmdVal).remove();
+											});
+	    								}else{
+	    									$.showDialog(response.msg);
+	    								}
+	    							}catch(exp){
+	    								console.error(exp);
+	    							}
+	    						}
+	    					});
+	    				}, 'ui-state-error', 'ui-icon ui-icon-alert');//eo confirm()
+	    				break;
+	    			case 'editRecord':
+	    				$('form#EditProjectActionForm'+cmdVal).submit();
 	    				break;
 	    		}
 	    	});
@@ -58,6 +90,9 @@ var DefaultCtrl = {
 			    };
 
 			DefaultCtrl.scrollTop();
+
+			//date-pick fields
+			$('.date-field').datepicker({dateFormat:'yy-mm-dd', minDate: new Date()});
 
 			//Register ajax-loading effect
 			$(document).ajaxStart(function(){
@@ -131,11 +166,11 @@ var DefaultCtrl = {
 					idx = 0,
 					getContact = function(deptIsOpen){
 						$('div').remove('.is_open_msg');
-						if(!deptIsOpen.is_open){
+						/*if(!deptIsOpen.is_open){
 							$('#ProjectFormLegend').append(deptIsOpen.msg);
 							initForm(false);
 							return;
-						}
+						}*/
 						//if the deparment is open for businese, then get the contact
 						$.ajax({url:getContactUrl, data:{departmentId:selfId}, dataType:'json'})
 						 .done(function(result){
@@ -174,7 +209,8 @@ var DefaultCtrl = {
 				    target = this,
 				    checkDupUrl = $('#CheckProjectNameDupUrl').val(),
 				    getCategoriesByDeptIdUrl = $('#GetCategoriesByDeptIdUrl').val(),
-				    departmentIds = [];
+				    departmentIds = [],
+				    typeId = $('#ProjectTypes').val();
 
 				if(value.length >= minlength){
 					$(this).parents('div').find('help-block').removeClass('alert alert-danger').html();
@@ -187,10 +223,6 @@ var DefaultCtrl = {
 					 			departmentIds.push($(ele).val());
 					 		});
 					 		$('div.step-3').removeClass('hidden');
-					 		$.ajax({ url:getCategoriesByDeptIdUrl, data:{deptIds:departmentIds} })
-					 		 .done(function(result){
-					 		 	$('div.category-list').html(result);
-					 		 });//eo done()
 					 	}else{
 					 		$(target).next('.help-block').html(result.msg).addClass('text-danger');
 					 	}
@@ -199,6 +231,28 @@ var DefaultCtrl = {
 
 				$event.preventDefault();
 			});//eo form.project-form::input[name=title]
+
+			$('form.project-form').on('change', 'select#ProjectTypes', function($event){
+				var typeId = parseInt($('#ProjectTypes').val(), 10),
+				    getCategoriesByDeptIdUrl = $('#GetCategoriesByDeptIdUrl').val(),
+				    departmentIds = [];
+
+				$('select[name^=department]').each(function(idx, ele){
+		 			departmentIds.push($(ele).val());
+		 		});
+
+				$.ajax({ url:getCategoriesByDeptIdUrl, data:{deptIds:departmentIds} })
+		 		 .done(function(result){
+		 		 	if(typeId !== 2){//TODO : Fix this magic number
+		 		 		$('div.business-items').addClass('hidden');
+		 		 		$('div.category-list').html('<input type="hidden" name="category_id" value="0" />');	
+		 		 		showSteps(11);
+						return;
+					}
+		 		 	$('div.business-items').removeClass('hidden');
+		 		 	$('div.category-list').html(result);
+		 		 });//eo done()
+			});
 
 			//keyup event listener for form.project-form::select[name=category_id]
 			//init other steps
@@ -252,7 +306,11 @@ var DefaultCtrl = {
 				});
 			});			
 
-		}//eo actionAdd
+		},//eo actionAdd
+
+		actionEdit:function(){
+			DefaultCtrl.actionAdd();
+		}
 
 	}, //eo DefaultCtrl
 
