@@ -28,7 +28,7 @@ class SystemLeftMenu extends AppWidget{
 		}
 
 		$optHtml  = '<nav class="navbar-default navbar-static-side" role="navigation">';
-		$optHtml .= '<div class="sidebar-collapse">';
+		//$optHtml .= '<div class="sidebar-collapse">';
 
 		$optHtml .= '<ul class="nav" id="side-menu">';
 
@@ -50,9 +50,9 @@ class SystemLeftMenu extends AppWidget{
                         <a href="#" class="menuBtn" cmd="changeWorkspace" cmdVal="/order/sales">'.$this->icon('stats').' Sales Records</a>
                     </li>';    
         */                
-        $optHtml .= '<li>
+        $optHtml .= '<li class="active">
                         <a href="#">'.$this->icon('list-alt').' Projects <span class="fa arrow"></span></a>
-                        <ul class="nav nav-second-level collapse in" style="height: auto;">
+                        <ul class="nav nav-second-level" style="height: auto;">
                             <li>
                                 <a href="#" class="menuBtn" cmd="changeWorkspace" cmdVal="/ticket/default/index?fromDepartmentId='.$this->staffRecord['BranchId'].'">'.$this->icon('chevron-right').Utils::e('To Others', false).'</a>
                             </li>
@@ -78,7 +78,7 @@ class SystemLeftMenu extends AppWidget{
 
 		$optHtml .= '</ul>';//EO: ul.nav
 
-		$optHtml .= '</div>';//EO: div.sidebar-collapse
+		//$optHtml .= '</div>';//EO: div.sidebar-collapse
 		$optHtml .= '</nav>';
 		echo $optHtml;
 	}

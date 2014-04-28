@@ -38,15 +38,15 @@ class Controller extends CController
 	        $cs->registerScriptFile( Yii::app()->getBaseUrl() . '/js/jquery.jqGrid.min.js', CClientScript::POS_END);
 	        $cs->registerScriptFile( Yii::app()->getBaseUrl() . '/js/jquery.highlight.min.js', CClientScript::POS_END);
 	        $cs->registerScriptFile( Yii::app()->getBaseUrl() . '/js/jquery.metisMenu.js', CClientScript::POS_END);
-	        $cs->registerScriptFile( Yii::app()->getBaseUrl() . '/js/i18n/grid.locale-tw.js', CClientScript::POS_END);
 	        $cs->registerScriptFile( Yii::app()->getBaseUrl() . '/js/summernote.min.js', CClientScript::POS_END);
+	        $cs->registerScriptFile( Yii::app()->getBaseUrl() . '/js/bootstrap-editable.min.js', CClientScript::POS_END);
 	        $cs->registerScriptFile( Yii::app()->getBaseUrl() . '/js/generic.behaviors.js', CClientScript::POS_END);
-	        $cs->registerCssFile('//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css');
 	        $cs->registerCssFile(Yii::app()->getBaseUrl() . '/css/south-street/jquery-ui.min.css');
+	        $cs->registerCssFile('//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css');
 	        $cs->registerCssFile('//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css');
-	        $cs->registerCssFile(Yii::app()->getBaseUrl() . '/css/ui.jqgrid.css');
 	        $cs->registerCssFile(Yii::app()->getBaseUrl() . '/css/jquery.metisMenu.css');
 	        $cs->registerCssFile(Yii::app()->getBaseUrl() . '/css/summernote.css');
+	        $cs->registerCssFile(Yii::app()->getBaseUrl() . '/css/bootstrap-editable.css');
 	        $cs->registerCssFile(Yii::app()->getBaseUrl() . '/css/bootstrap.doc.min.css');
 	        $cs->registerCssFile(Yii::app()->getBaseUrl() . '/css/generic.styles.css');
 	        //controller's action js

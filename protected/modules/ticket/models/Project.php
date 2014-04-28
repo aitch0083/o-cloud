@@ -47,7 +47,7 @@ class Project extends CActiveRecord{
 		// NOTE: you should only define rules for those attributes that
 		// will receive user inputs.
 		return array(
-			array('department_id, category_id, user_id, title, purpose, 
+			array('department_id, category_id, user_id, type_id, title, purpose, currency_type,
 				   demands, acceptance, apply_range, verifiers, expecting_date, finished_date, estimated_profit,
 				   contact_id, rewards', 'required')
 		);

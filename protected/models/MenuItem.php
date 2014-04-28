@@ -13,7 +13,7 @@ class MenuItem extends CActiveRecord{
 		if(self::$db !== null){
 			return self::$db;
 		}else{
-			self::$db = Yii::app()->db;
+			self::$db = Yii::app()->ocdb;
 			if(self::$db instanceof CDbConnection){
 				self::$db->setActive(true);
 				return self::$db;
@@ -31,7 +31,7 @@ class MenuItem extends CActiveRecord{
 	 * @return string associated table name
 	 */
 	public function tableName(){
-		return 'funmodule';
+		return 'datapub_funmodule';
 	}
 
 	/**
@@ -58,8 +58,8 @@ class MenuItem extends CActiveRecord{
 		}
 		//cross database join
 		$command = self::$db->createCommand('SELECT A.ModuleId, B.ModuleName AS label
-					FROM data_in.upopedom A 
-					LEFT JOIN data_public.funmodule B ON B.ModuleId=A.ModuleId 
+					FROM datain_upopedom A 
+					LEFT JOIN datapub_funmodule B ON B.ModuleId=A.ModuleId 
 					WHERE 1 AND A.Action>0 AND B.TypeId='.$menuTypeId.' AND A.UserId=:uId AND B.Estate=1 ORDER BY B.OrderId');
 		
 		$command->bindParam(':uId', $uId);
@@ -73,9 +73,9 @@ class MenuItem extends CActiveRecord{
 			foreach($items as $idx=>$item){
 				//cross database query
 				$command = self::$db->createCommand('SELECT F.ModuleId 
-					FROM data_public.modulenexus M 
-					LEFT JOIN data_in.upopedom U ON U.ModuleId =M.dModuleId 
-					LEFT JOIN data_public.funmodule F ON F.ModuleId=U.ModuleId 
+					FROM datapub_modulenexus M 
+					LEFT JOIN datain_upopedom U ON U.ModuleId =M.dModuleId 
+					LEFT JOIN datapub_funmodule F ON F.ModuleId=U.ModuleId 
 					WHERE U.UserId ='.$uId.' and M.ModuleId='.$item['ModuleId'].' and U.Action>0 and F.Estate=1  and (F.cSign=0 or F.cSign=:cSign) 
 					LIMIT 1');
 				$command->bindValue(':cSign', $cSign);

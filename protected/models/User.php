@@ -91,7 +91,7 @@ class User extends CActiveRecord{
 
 		//find company's In/Out domain
 		$connection = Yii::app()->db;
-		$command = $connection->createCommand('SELECT cSign, EShortName, CShortName, OutIp FROM  companys_group WHERE Db=:dataIn LIMIT 1');
+		$command = $connection->createCommand('SELECT cSign, EShortName, CShortName, OutIp FROM  datapub_companys_group WHERE Db=:dataIn LIMIT 1');
 		$command->bindValue(':dataIn', 'd7', PDO::PARAM_STR);//d7 is the database for input data
 		$companyDoamin = $command->queryRow();
 		$outIp = $companyDoamin['OutIp'];
@@ -122,7 +122,7 @@ class User extends CActiveRecord{
 		$uFrom = $companyGroup['uFrom'];
 
 		$connection = Yii::app()->dbIn;
-		$command = $connection->createCommand('INSERT INTO loginlog (Id, uId, uType, uName, uFrom, uIP, sTime, eTime) VALUES (NULL, :uid, :utype, :uname, :ufrom, :uip, :stime, "0000-00-00 00:00:00")');
+		$command = $connection->createCommand('INSERT INTO datain_loginlog (Id, uId, uType, uName, uFrom, uIP, sTime, eTime) VALUES (NULL, :uid, :utype, :uname, :ufrom, :uip, :stime, "0000-00-00 00:00:00")');
 		$command->bindValue(':uid', $userRec['Id'], PDO::PARAM_INT);
 		$command->bindValue(':utype', $userRec['uType'], PDO::PARAM_STR);
 		$command->bindValue(':uname', $userRec['uName'], PDO::PARAM_STR);
@@ -135,7 +135,7 @@ class User extends CActiveRecord{
 
 	public function getLastLoginTime($uId){
 		$connection = Yii::app()->dbIn;
-		$command = $connection->createCommand('SELECT eTime FROM loginlog WHERE uId=:uid ORDER BY id DESC LIMIT 1');
+		$command = $connection->createCommand('SELECT eTime FROM datain_loginlog WHERE uId=:uid ORDER BY id DESC LIMIT 1');
 		$command->bindParam(':uid', $uId, PDO::PARAM_INT);
 		$result = $command->queryRow();
 
@@ -161,13 +161,48 @@ class User extends CActiveRecord{
 		$uFrom = $companyGroup['uFrom'];
 
 		$connection = Yii::app()->dbIn;
-		$command = $connection->createCommand('INSERT INTO online (sId, uId, uFrom, IP, LastTime) VALUES (NULL, :uid, :ufrom, :loginip, :time)');
+		$command = $connection->createCommand('INSERT INTO datain_online (sId, uId, uFrom, IP, LastTime) VALUES (NULL, :uid, :ufrom, :loginip, :time)');
 		$command->bindParam(':uid', $uId, PDO::PARAM_INT);
 		$command->bindParam(':ufrom', $uFrom, PDO::PARAM_STR);
 		$command->bindParam(':loginip', $loginIp, PDO::PARAM_STR);
 		$command->bindValue(':time', time(), PDO::PARAM_INT);
 
 		return $command->execute();
+	}
+
+	public function getAllUsers(){
+		$command = self::$dbIn->createCommand('SELECT 
+			A.Id, A.Name, A.Nickname, A.ExtNo, A.BranchId, A.auth_code, A.Mail, 
+			B.Name AS Branch, 
+			C.WorkNote, C.WorkTime, C.Name AS Title, 
+			D.CShortName,
+			Department.name AS LeadDept,
+			Department.id AS LeadDeptId,
+			DepartmentContact.name AS ContactDept,
+			DepartmentContact.id AS ContactDeptId
+			FROM datapub_staffmain A
+			INNER JOIN oc_departments B ON B.id=A.BranchId 
+			INNER JOIN datapub_jobdata C ON C.Id=A.JobId 
+			INNER JOIN datapub_companys_group D ON D.cSign=A.cSign
+			LEFT JOIN oc_department_leaders Leader ON A.Id=Leader.user_id
+			LEFT JOIN oc_departments Department ON Leader.department_id=Department.id
+			LEFT JOIN oc_department_contacts Contact ON A.Id=Contact.user_id
+			LEFT JOIN oc_departments DepartmentContact ON Contact.department_id=DepartmentContact.id
+			WHERE 1 ORDER BY A.Id DESC LIMIT 300');
+
+		return $command->queryAll();
+	}
+
+	public function updateField($field, $value, $id){
+		switch($field){
+			case 'Mail':
+				$sql = 'UPDATE datapub_staffmain SET Mail=:mail WHERE datapub_staffmain.Id=:id';
+				$command = self::$dbIn->createCommand($sql);
+				$command->bindParam(':mail', $value);
+				$command->bindParam(':id', $id);
+				return $command->execute();
+				break;
+		}
 	}
 
 	/**

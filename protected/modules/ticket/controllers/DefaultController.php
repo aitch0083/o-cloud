@@ -10,8 +10,8 @@ class DefaultController extends Controller{
 
 	protected $restrictedAreas = array( 
 		//only department manager can do the following actions
-		'decline'=>4,
-		'edit'=>4
+		'decline'=>1,
+		'edit'=>1
 	);
 
 	/**
@@ -81,19 +81,22 @@ class DefaultController extends Controller{
 		$prefix = '/'.$this->module->id.'/'.$this->id;
 		$editFormAction = $prefix.'/edit';
 		$declineFormAction = $prefix.'/decline';
+		$deleteFormAction = $prefix.'/delete';
 
-		$renderPage = $rendertype === 'usual' ? 'index' : 'excel_style';
+		$staff = Yii::app()->user->getState('staff_record');
+
+		$renderPage = ($rendertype === 'usual' && intval($staff['auth_code']) < 256) ? 'index' : 'excel_style';
 
 		$this->render($renderPage, compact('isDone', 'isPublished', 'page', 'pageSize',
 										   'startDate', 'endDate',
 										   'sortField', 'sortDir', 'statusCode', 'keywords',
 										   'records', 'count', 'pageNum', 
 										   'columns', 'runningDepartments', 'fromDepartmentId',
-										   'editFormAction', 'declineFormAction',
+										   'editFormAction', 'declineFormAction', 'deleteFormAction',
 										   'rendertype'));
 	}
 
-	public function actionAdd($startLevel=1){
+	public function actionAdd($startLevel=1, $type='peripheral'){
 
 		if(Yii::app()->request->requestType === 'POST'){//for new created record
 			
@@ -117,6 +120,7 @@ class DefaultController extends Controller{
 			$deptId = $form['department_id'];
 			$dept = new Department();
 			$contact = $dept->getContact($deptId);
+			$leader = $dept->getLeader($deptId);
 			$dbAccessResult = null;
 			
 			$project = new Project();
@@ -125,17 +129,40 @@ class DefaultController extends Controller{
 			//setup default fields
 			$now = date('Y-m-d H:i:s');
 			$project->from_department_id = $staffRecord['BranchId'];//Creator's Deparment
+			$project->leader_id = $leader['Id'];
 			$project->created = $now;
 			$project->modified = $now;
 			$project->dept_path = $path;
-			$project->note = $form['note'];
+			$project->type_id = $form['type_id'];
+			$project->estimated_profit = abs(intval($form['estimated_profit']));
+			$project->acceptance = htmlspecialchars($form['acceptance']);
+			$project->note = htmlspecialchars($form['note']);
 
+			$task = Yii::app()->request->getPost('task');
+			$descriptions = $task['descriptions'];
+			$deliverables = $task['deliverables'];
+			$duedates = $task['duedates'];
+			$responsibles = $task['responsibles'];
+			$inCharges = $task['in_charges'];
+			$budgets = $task['budgets'];
+			$currencyTypes = $task['currency_types'];
+			$files = isset($_FILES['task']) ? $_FILES['task'] : array();
+
+			//calculate task number
+			$project->task_no = count($descriptions);
+				
 			if($project->save()){
 				$project->writeLog($user['Id'], Project::OP_CREATE, $project->primaryKey);
+
+				//create task
+				$taskModel = new Task();
+				$taskModel->create($project->primaryKey, $user['Id'], $descriptions, $duedates, $responsibles, 
+								   $inCharges, $deliverables, $files, $budgets, $currencyTypes);
+
 				$dbAccessResult = array(
 					'result' => true,
 					'redirect' => '/'.$this->module->id.'/'.$this->id,
-					'msg' => Utils::e('Proejct saved, the contact [{uName}{title}] of the department will get back to you asap.', false,
+					'msg' => Utils::e('Proejct saved. Good luck.', false,
 									array('{uName}'=>$contact['Name'], '{title}'=>$contact['title']))
 				);	
 			}else{
@@ -152,10 +179,10 @@ class DefaultController extends Controller{
 			return;
 		}
 
-		$this->actionGetList($startLevel, 0, false);
+		$this->actionGetList($startLevel, 0, false, $type);
 	}
 
-	public function actionGetList($startLevel, $parentId=0, $isAjax=true){
+	public function actionGetList($startLevel, $parentId=0, $isAjax=true, $type='peripheral'){
 		$department = new Department();
 		$list = $department->getList($startLevel, $parentId);
 		$maxLevel = $department->getMaxLevel();
@@ -177,7 +204,11 @@ class DefaultController extends Controller{
 			$getCategoriesByDeptIdUrl = $prefix.'/getCategories';
 			$checkDeptOpenUrl 		  = $prefix.'/isOpen';
 			$projectAddUrl 			  = $prefix.'/add';
+			$generateTaskTableUrl     = $prefix.'/generateTaskTable';
+			$imgUploadUrl             = $prefix.'/uploadImg';
+			$staffSearchUrl           = $prefix.'/searchStaff';
 			$accessToken = $this->getAccessToken();
+			$assignedType = $type;
 
 			//fetch main project types
 			$project = new Project();
@@ -191,8 +222,9 @@ class DefaultController extends Controller{
 			$this->render('add', compact('startLevel', 'maxLevel', 'list',
 									     'isAjax', 'user', 'searchAction', 'addAction',
 									     'getMenuAction', 'getContactAction', 'checkProjectNameDupUrl',
-									     'getCategoriesByDeptIdUrl', 'checkDeptOpenUrl', 'projectAddUrl',
-									     'accessToken', 'crumbs', 'projectTypes'));
+									     'getCategoriesByDeptIdUrl', 'checkDeptOpenUrl', 'projectAddUrl', 'generateTaskTableUrl',
+									     'imgUploadUrl', 'staffSearchUrl',
+									     'accessToken', 'crumbs', 'projectTypes', 'assignedType'));
 		}
 	}
 
@@ -215,15 +247,81 @@ class DefaultController extends Controller{
 		$departments = $department->getAll();
 		$departments = Utils::buildTree($departments);
 		$deptPath = explode(',', $project['dept_path']);
+		$prefix 				  = '/'.$this->module->id.'/'.$this->id;
+		$searchAction 			  = $prefix.'/'.$this->action->id;
+		$addAction 				  = $prefix.'/add';
+		$getMenuAction 			  = $prefix.'/getList';
+		$addTaskAction            = $prefix.'/addTask';
+		$getContactAction  		  = $prefix.'/getContact';
+		$checkProjectNameDupUrl   = $prefix.'/searchByKeyword';
+		$getCategoriesByDeptIdUrl = $prefix.'/getCategories';
+		$checkDeptOpenUrl 		  = $prefix.'/isOpen';
+		$projectAddUrl 			  = $prefix.'/add';
+		$generateTaskTableUrl     = $prefix.'/generateTaskTable';
+		$imgUploadUrl             = $prefix.'/uploadImg';
+		$staffSearchUrl           = $prefix.'/searchStaff';
+		$editTaskUrl			  = $prefix.'/editTask';
+		$updateTaskListUrl        = $prefix.'/updateTaskList';
+		$deleteTaskUrl			  = $prefix.'/deleteTask';
+		$accessToken = $this->getAccessToken();
+
+		$taskModel = new Task();
+		$tasks = $taskModel->read($id);
 
 		$crumbs = array(
 				array( 'link'=>$prefix, 'label'=>Utils::e('Project List', false) ),
 				array( 'link'=>$editAction, 'label'=>Utils::e('Edit Project', false) ),
 			);
 
-		$this->render('edit', compact('project', 'accessToken', 'editAction', 'crumbs', 
+		$this->render('edit', compact('project', 'accessToken', 'editAction', 'addTaskAction', 'crumbs', 
 									  'projectTypes', 'projectCategories', 'departments', 
-									  'deptPath', 'contact'));
+									  'deptPath', 'contact', 'tasks', 'searchAction', 'addAction',
+								      'getMenuAction', 'getContactAction', 'checkProjectNameDupUrl',
+								      'getCategoriesByDeptIdUrl', 'checkDeptOpenUrl', 'projectAddUrl', 'generateTaskTableUrl',
+								      'imgUploadUrl', 'staffSearchUrl', 'editTaskUrl', 'updateTaskListUrl', 'deleteTaskUrl',
+								      'accessToken'));
+	}
+
+	public function actionAddTask(){
+		$user = Yii::app()->user->getState('user_rec');
+
+		$id = $this->decode(Yii::app()->request->getPost('project_id'));
+		$task = Yii::app()->request->getPost('task');
+		$descriptions = $task['descriptions'];
+		$deliverables = $task['deliverables'];
+		$duedates = $task['duedates'];
+		$responsibles = $task['responsibles'];
+		$inCharges = $task['in_charges'];
+		$budgets = $task['budgets'];
+		$currencyTypes = $task['currency_types'];
+		$files = isset($_FILES['task']) ? $_FILES['task'] : array();
+
+		//create task
+		$taskModel = new Task();
+		$rlt = $taskModel->create($id, $user['Id'], $descriptions, $duedates, $responsibles, 
+						   $inCharges, $deliverables, $files, $budgets, $currencyTypes);
+
+		if($rlt){	
+			//update project task_no
+			$project = Project::model()->findByPk($id);
+			$project->task_no = $taskModel->getTaskNo($id);
+			$project->save();
+			echo json_encode(array('rlt'=>true, 'msg'=>Utils::e('Task created.', false)));
+		}else{
+			echo json_encode(array('rlt'=>false, 'msg'=>Utils::e('Unable to create task!', false)));
+		}
+	}
+
+	public function actionUpdateTaskList(){
+		if(!Yii::app()->request->isAjaxRequest){
+			return;
+		}
+
+		$projectId = $this->decode(Yii::app()->request->getPost('project_id'));
+
+		$tasks = Task::model()->findAll('project_id=:project_id', array(':project_id'=>$projectId));
+
+		$this->renderPartial('task_list', array('tasks'=>$tasks, 'project_id'=>$projectId));
 	}
 
 	public function actionDecline(){
@@ -333,6 +431,122 @@ class DefaultController extends Controller{
 		}
 
 		$this->renderPartial('project_category_list', compact('categories'));
+	}
+
+	public function actionDelete(){
+		if(!Yii::app()->request->isAjaxRequest){
+			return;
+		}
+
+		$id = $this->decode(Yii::app()->request->getPost('project_id'));
+
+		$project = Project::model()->findByPk($id);
+		$project->is_canceled = 1;
+		$rlt = $project->save();
+
+		$result = array(
+			'rlt' => $rlt,
+			'msg' => $rlt ? 
+					   Utils::e('This proejct is deleted.', false) : 
+					   Utils::e('This proejct cannot be deleted.', false)
+		);
+
+		echo json_encode($result);
+	}
+
+	public function actionGenerateTaskTable($taskNo, $withHeader='true'){
+		if(!Yii::app()->request->isAjaxRequest){
+			return;
+		}
+
+		$withHeader = $withHeader === 'true' ? true : false;
+		$this->renderPartial('task_table', array('taskNo'=>$taskNo, 'withHeader'=>$withHeader));
+	}
+
+	public function actionUploadImg(){
+
+		if(!Yii::app()->request->isAjaxRequest){
+			return;
+		}
+
+		$file = $_FILES['file'];
+
+		if(!$file['error']){
+
+			$uploadFolder = Yii::app()->basePath.'/../files/user_uploads/';
+			
+			$name = md5(rand(100, 200));
+	        $ext = explode('.', strtolower($file['name']));
+	        $filename = $name . '.' . array_pop($ext);
+	        $destination = $uploadFolder . $filename; 
+	        $location = $file['tmp_name'];
+	        move_uploaded_file($location, $destination);
+
+	        echo '/files/user_uploads/' . $filename;//change this UR
+    	}else{
+    		echo 'Image Upload Failed! Details:'.$file['error'];
+    	}
+	}
+
+	public function actionSearchStaff($term){
+		if(!Yii::app()->request->isAjaxRequest){
+			return;
+		}
+
+		$staff = new Staff();
+		$results = $staff->search($term); 
+
+		echo json_encode($results);
+	}
+
+	public function actionEditTask($type){
+		if(!Yii::app()->request->isAjaxRequest){
+			return;
+		}
+
+		$taskModel = new Task();
+		$updateRlt = array(
+			'rlt'=>false,
+			'msg'=>''
+		);
+		
+		switch($type){
+			default:
+				$pk = Yii::app()->request->getPost('pk');
+				$value = Yii::app()->request->getPost('value');
+				$updateRlt['rlt'] = $taskModel->updateField($type, $value, $pk);
+				$updateRlt['msg'] = $updateRlt['rlt'] ? Utils::e('Field Updated.', false) : Utils::e('Field Update Failed.' ,false);
+				break;
+			case 'task_file': 
+				$file = $_FILES[0];
+				$id = Yii::app()->request->getPost('id');
+				$updateRlt['rlt'] = $taskModel->updateFile($file, $id);
+				$updateRlt['msg'] = $updateRlt['rlt'] ? Utils::e('File Uploaded.', false) : Utils::e('File Failed.' ,false);
+				break;
+		}
+		
+		echo json_encode($updateRlt);
+	}
+
+	public function actionDeleteTask(){
+		if(!Yii::app()->request->isAjaxRequest){
+			return;
+		}
+
+		$projectId = $this->decode(Yii::app()->request->getPost('project_id'));
+		$taskId = $this->decode(Yii::app()->request->getPost('task_id'));
+
+		$rlt = Task::model()->deleteByPk($taskId);
+		$taskModel = new Task();
+
+		if($rlt){
+			//update project task_no
+			$project = Project::model()->findByPk($projectId);
+			$project->task_no = $taskModel->getTaskNo($projectId);
+			$project->save();
+		}
+
+		echo $rlt ? json_encode(array('rlt'=>true, 'msg'=>Utils::e('Task Deleted', false))) : json_encode(array('rlt'=>false, 'msg'=>Utils::e('Unable to delete task.', false)));
 	}
 
 }

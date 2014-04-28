@@ -13,9 +13,9 @@ class Utils {
 
 	public static function e($msg, $toEcho=true, $params=null, $yiiCategory='yii'){
 		if($toEcho){
-			echo Yii::t($yiiCategory, $msg, $params);
+			echo nl2br(Yii::t($yiiCategory, $msg, $params));
 		}else{
-			return Yii::t($yiiCategory, $msg, $params);
+			return nl2br(Yii::t($yiiCategory, $msg, $params));
 		}
 	}
 

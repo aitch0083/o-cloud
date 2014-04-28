@@ -6,6 +6,15 @@ select.form-control{
     width: 15% !important;
 }
 
+select.task-budget-combo{
+    width: 70px !important;
+}
+
+.task-budget-number-txt{
+    width: 80px !important;
+    margin-right: 3px;
+}
+
 .wrapper{
 	width: 100%;
 }

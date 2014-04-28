@@ -1,8 +1,10 @@
 <?php
 /* @var $this DefaultController */
 $user = Yii::app()->user->getState('user_rec');
+$staff = Yii::app()->user->getState('staff_record');
 $searchAction = '/'.$this->module->id.'/'.$this->id.'/'.$this->action->id;
 $addAction = '/'.$this->module->id.'/'.$this->id.'/add';
+
 ?>
 
 <div style="width: 200%;">
@@ -88,7 +90,17 @@ $addAction = '/'.$this->module->id.'/'.$this->id.'/add';
 		    $listTitle = $fromDepartmentId !== '' ? Utils::e('On Going Projects') : Utils::e('My Team\'s Projects');
 		    echo $listTitle;
 		?>
-		<button class="btn btn-xs btn-primary" type="button" cmd="addRecord" cmdVal="<?php echo $addAction; ?>" target="#workspace" ><b class="glyphicon glyphicon-plus"></b> <?php echo Yii::t('yii', '開新專案'); ?></button>
+		<div class="btn-group">
+		    <button type="button" class="btn btn-primary btn-xs dropdown-toggle" data-toggle="dropdown">
+		      <?php echo Yii::t('yii', '開新專案'); ?>
+		      <span class="caret"></span>
+		    </button>
+		    <ul class="dropdown-menu">
+		      <li><a class="btn btn-xs" href="#" cmd="addRecord" cmdVal="<?php echo $addAction,'?startLevel=1&type=project'; ?>" target="#workspace"><?php Utils::e('Project'); ?></a></li>
+		      <li><a class="btn btn-xs" href="#" cmd="addRecord" cmdVal="<?php echo $addAction,'?startLevel=1&type=process'; ?>" target="#workspace"><?php Utils::e('Process'); ?></a></li>
+		      <li><a class="btn btn-xs" href="#" cmd="addRecord" cmdVal="<?php echo $addAction,'?startLevel=1&type=peripheral'; ?>" target="#workspace"><?php Utils::e('Peripheral'); ?></a></li>
+		    </ul>
+		</div>
 	</h4>
 
 	<?php if(count($records) > 0): ?>
@@ -139,32 +151,41 @@ $addAction = '/'.$this->module->id.'/'.$this->id.'/add';
 					<td><?php echo Utils::eLabel($record['is_done'] ? 'Done' : 'Undone', $record['is_done']); ?></td>
 					<td><?php echo $record['demands']; ?></td>
 					<td><?php echo $record['apply_range']; ?></td>
-					<td><?php echo $record['acceptance']; ?></td>
+					<td><?php echo htmlspecialchars_decode($record['acceptance']); ?></td>
 					<td class="text-center"><?php echo $record['task_no']; ?></td>
 					<td>
 						<div class="btn-group">
-							<button class="btn btn-xs btn-info tipinfos" cmd="printRecord" cmdVal="<?php echo $recId; ?>" data-toggle="tooltip" data-placement="bottom" title="<?php Utils::e('Print'); ?>"><?php Utils::icon('print'); ?></button>
 							<button class="btn btn-xs btn-info tipinfos" cmd="viewRecord" cmdVal="<?php echo $recId; ?>" data-toggle="tooltip" data-placement="bottom" title="<?php Utils::e('View'); ?>"><?php Utils::icon('search'); ?></button>
+							
+							<?php if($record['user_id'] === $user['Id']): ?>
 							<button class="btn btn-xs btn-info tipinfos" cmd="editRecord" cmdVal="<?php echo $recId; ?>" data-toggle="tooltip" data-placement="bottom" title="<?php Utils::e('Edit'); ?>"><?php Utils::icon('edit'); ?></button>
-							<button class="btn btn-xs btn-info tipinfos" cmd="delteRecord" cmdVal="<?php echo $recId; ?>" data-toggle="tooltip" data-placement="bottom" title="<?php Utils::e('Cancel'); ?>"><?php Utils::icon('trash'); ?></button>
-							<?php if(!$record['is_published'] && !$record['is_declined']): ?>
+							<button class="btn btn-xs btn-info tipinfos" cmd="deleteRecord" cmdVal="<?php echo $recId; ?>" data-toggle="tooltip" data-placement="bottom" title="<?php Utils::e('Delete'); ?>"><?php Utils::icon('trash'); ?></button>
+							<?php endif; ?>
+
+							<?php if(!$record['is_published'] && !$record['is_declined'] && $staff['auth_code'] >= 256): ?>
 							<!-- For Freeman only -->
 							<!-- Initial Project will mail to the superviors to the very top. -->
 							<button class="btn btn-xs btn-default tipinfos" cmd="accept_prj" cmdVal="<?php echo $recId; ?>" data-toggle="tooltip" data-placement="bottom" title="<?php Utils::e('Accept'); ?>"><?php Utils::icon('ok'); ?></button>
 							<button class="btn btn-xs btn-danger tipinfos" cmd="decline_prj" cmdVal="<?php echo $recId; ?>" data-toggle="tooltip" data-placement="bottom" title="<?php Utils::e('Suspend'); ?>"><?php Utils::icon('remove'); ?></button>
 							<button class="btn btn-xs btn-warning tipinfos" cmd="review_prj" cmdVal="<?php echo $recId; ?>" data-toggle="tooltip" data-placement="bottom" title="<?php Utils::e('Review'); ?>"><?php Utils::icon('edit'); ?></button>
 							<?php endif; ?>
+
 							<?php if($record['is_published'] && !$record['is_done'] && !$record['is_suspend']): ?>
 							<button class="btn btn-xs btn-warning tipinfos" cmd="suspend_prj" cmdVal="<?php echo $recId; ?>" data-toggle="tooltip" data-placement="bottom" title="<?php Utils::e('Suspend'); ?>"><?php Utils::icon('minus'); ?></button>
 							<?php endif; ?>
+
 							<!-- Action Parameters -->
-							<input type="hidden" id="AcceptProjectMsg<?php echo $recId; ?>" value="<?php Utils::e('Are you sure about accepting this project '.chr(10).'['.$record['title'].']? '.chr(10).'Once accepted, it cannot be reversed!'); ?>" />
-							<input type="hidden" id="DeclineProjectMsg<?php echo $recId; ?>" value="<?php Utils::e('Are you sure about declining this project '.chr(10).'['.$record['title'].']? '.chr(10).'Once declined, it cannot be reversed!'); ?>" />
+							<input type="hidden" id="AcceptProjectMsg<?php echo $recId; ?>" value="<?php Utils::e('Are you sure about accepting this project? '.chr(10).'Project:['.$record['title'].'] '.chr(10).' Once accepted, it cannot be reversed!'); ?>" />
+							<input type="hidden" id="DeclineProjectMsg<?php echo $recId; ?>" value="<?php Utils::e('Are you sure about declining this project? '.chr(10).'Project:['.$record['title'].'] '.chr(10).' Once declined, it cannot be reversed!'); ?>" />
+							<input type="hidden" id="DeleteProjectMsg<?php echo $recId; ?>" value="<?php Utils::e('Are you sure about delete this project? '.chr(10).'Project:['.$record['title'].'] '.chr(10).' Once deleted, it cannot be reversed!'); ?>" />
 							<!-- Action Forms -->
 							<form class="hidden" id="EditProjectActionForm<?php echo $recId; ?>" method="post" action="<?php echo $editFormAction; ?>">
 								<input type="hidden" name="project_id" value="<?php echo Utils::encode($recId); ?>" />
 							</form>
 							<form class="hidden" id="DeclineProjectActionForm<?php echo $recId; ?>" method="post" action="<?php echo $declineFormAction; ?>">
+								<input type="hidden" name="project_id" value="<?php echo Utils::encode($recId); ?>" />
+							</form>
+							<form class="hidden" id="DeleteProjectActionForm<?php echo $recId; ?>" method="post" action="<?php echo $deleteFormAction; ?>">
 								<input type="hidden" name="project_id" value="<?php echo Utils::encode($recId); ?>" />
 							</form>
 						</div>

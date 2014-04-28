@@ -20,7 +20,7 @@ $this->pageTitle=Yii::app()->name;
 ?>
 
 <div id="page-wrapper">
-	<iframe id="workspace" class="autoHeight" src="/ticket/default/index?fromDepartmentId=<?php echo $staffRecord['BranchId']; ?>&rendertype=list" frameborder="0" style="overflow:scroll;"></iframe>
+	<iframe id="workspace" class="autoHeight" src="/ticket/default/index?fromDepartmentId=<?php echo $staffRecord['BranchId']; ?>&rendertype=usual" frameborder="0" style="overflow:scroll;"></iframe>
 </div>
 
 

@@ -58,7 +58,7 @@ class Department extends CActiveRecord{
 	}
 
 	public function getAll(){
-		$command = self::$db->createCommand()->select('id, parent_id, name, is_open')->from($this->tableName());
+		$command = self::$db->createCommand()->select('id, parent_id, name, is_open, level')->from($this->tableName());
 
 		return $command->queryAll();
 	}
@@ -87,16 +87,49 @@ class Department extends CActiveRecord{
 	}
 
 	public function getContact($departmentId, $limit=1){
-		$command = self::$db->createCommand()->select('job.Name title, utable.Id, user.Name, user.Mail, user.ExtNo')
+		$command = self::$db->createCommand()->select('job.Name title, user.Id, user.Name, user.Mail, user.ExtNo')
 											 ->from('oc_department_contacts dc_pivot')		
 											 ->join('oc_departments department', 'dc_pivot.department_id=department.id')
-											 ->join('datain_usertable utable', 'dc_pivot.user_id=utable.Id')
-											 ->join('datapub_staffmain user', 'utable.Number=user.Number')
+											 ->join('datapub_staffmain user', 'dc_pivot.user_id=user.Id')
 											 ->join('datapub_jobdata job', 'user.JobId=job.Id')
 											 ->where('dc_pivot.department_id=:dept_id', array(':dept_id'=>$departmentId))
 											 ->limit($limit);
 		return $command->queryRow();
 	}
+
+	public function getLeader($departmentId, $limit=1){
+		$command = self::$db->createCommand()->select('user.Id')
+											 ->from('oc_department_leaders dc_pivot')		
+											 ->join('oc_departments department', 'dc_pivot.department_id=department.id')
+											 ->join('datapub_staffmain user', 'dc_pivot.user_id=user.Id')
+											 ->where('dc_pivot.department_id=:dept_id', array(':dept_id'=>$departmentId))
+											 ->limit($limit);
+		return $command->queryRow();	
+	}
+
+	public function assignLeader($departmentId, $userId, $operation='assign_leader'){
+		$taregtTable = ($operation === 'assign_leader' ? 'oc_department_leaders' : 'oc_department_contacts');
+		//find duplicate fisrt
+		$command = self::$db->createCommand('SELECT id FROM '.$taregtTable.' Leader WHERE Leader.department_id=:deptId AND Leader.user_id=:userId LIMIT 1');
+		$command->bindParam(':deptId', $departmentId);
+		$command->bindParam(':userId', $userId);
+		if($command->queryRow()){//return 
+			return true;
+		}else{//create one
+			//remove first, only one can be the leader/contact
+			self::$db->createCommand()->delete($taregtTable, 'department_id=:deptId', array(':deptId'=>$departmentId));
+			//then create 
+			$command = self::$db->createCommand('INSERT INTO '.$taregtTable.' (id, department_id, user_id, created, modified) VALUES(null, :deptId, :userId, NOW(), NOW())');
+			$command->bindParam(':deptId', $departmentId);
+			$command->bindParam(':userId', $userId);
+			return $command->execute();
+		}
+	}
+
+	public function removeLeader($departmentId, $userId, $operation='remove_leader'){
+		$taregtTable = ($operation === 'remove_leader' ? 'oc_department_leaders' : 'oc_department_contacts');
+		return self::$db->createCommand()->delete($taregtTable, 'department_id=:deptId and user_id=:userId', array(':deptId'=>$departmentId, ':userId'=>$userId));
+	}	
 
 	public function isOpen($departmentId){
 		$command = self::$db->createCommand()

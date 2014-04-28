@@ -63,7 +63,6 @@ $(document).ready(function(){
 
 	//highlight keyword search
 	if(keywords !== null && keywords !== undefined && keywords !== ''){
-		console.info('keywords:',keywords);
 		$('body').highlight(keywords, {element:'em', className:'highlight-bg'});
 	}
 

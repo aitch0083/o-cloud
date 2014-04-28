@@ -8,7 +8,7 @@
  */
 class Staff extends CActiveRecord{
 
-	private static $targetDB = 'dbPub';
+	private static $targetDB = 'ocdb';
 
 	/**
 	 * @return resource target database conection
@@ -69,6 +69,18 @@ class Staff extends CActiveRecord{
 				'Number'
 			)//eo contact
 		);
+	}
+
+	public function search($keyword){
+
+		$command = self::$db->createCommand('SELECT Id, Name, Nickname, Nickname AS value 
+											   FROM datapub_staffmain Staff 
+											   WHERE Name LIKE "%'.$keyword.'%" OR 
+											         Nickname LIKE "%'.$keyword.'%" OR
+											         Mail LIKE "%'.$keyword.'%"
+											   LIMIT 10');
+		
+		return $command->queryAll();
 	}
 
 	/**

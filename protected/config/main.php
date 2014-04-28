@@ -65,7 +65,7 @@ return array(
 		//),
 		// uncomment the following to use a MySQL database
 		'db'=>array( //data_public <=> d0, [DEFAULT]
-			'connectionString' => 'mysql:host=localhost;dbname=data_public',
+			'connectionString' => 'mysql:host=localhost;dbname=oc_db',
 			'emulatePrepare' => true,
 			'username' => 'yii_web',
 			'password' => 'yii_webpass_20140317',
@@ -74,7 +74,7 @@ return array(
 		),
 		'dbIn'=>array(//data_in <=> d7
 			'class' => 'CDbConnection',
-			'connectionString' => 'mysql:host=localhost;dbname=data_in',
+			'connectionString' => 'mysql:host=localhost;dbname=oc_db',
 			'emulatePrepare' => true,
 			'username' => 'yii_web',
 			'password' => 'yii_webpass_20140317',
@@ -83,7 +83,7 @@ return array(
 		),
 		'dbOut'=>array(//data_out <=> d3
 			'class' => 'CDbConnection',
-			'connectionString' => 'mysql:host=localhost;dbname=data_out',
+			'connectionString' => 'mysql:host=localhost;dbname=oc_db',
 			'emulatePrepare' => true,
 			'username' => 'yii_web',
 			'password' => 'yii_webpass_20140317',

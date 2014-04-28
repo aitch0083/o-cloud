@@ -67,6 +67,28 @@ var DefaultCtrl = {
 	    			case 'editRecord':
 	    				$('form#EditProjectActionForm'+cmdVal).submit();
 	    				break;
+	    			case 'deleteRecord':
+	    				var msg = $('#DeleteProjectMsg'+cmdVal).val();
+	    				$event.preventDefault();
+	    				$.confirm(msg, 'Confirm', function(){
+	    					$('form#DeleteProjectActionForm'+cmdVal).ajaxSubmit({
+	    						success: function(response, statusText, xhr, $form){
+	    							try{
+	    								response = $.parseJSON(response);
+	    								if(response.rlt){
+	    									$.showDialog(response.msg, null, null, function(){
+	    										$('tr.target_rec'+cmdVal).remove();
+											});
+	    								}else{
+	    									$.showDialog(response.msg);
+	    								}
+	    							}catch(exp){
+	    								console.error(exp);
+	    							}
+	    						}
+	    					});
+	    				}, 'ui-state-error', 'ui-icon ui-icon-alert');
+	    				break;
 	    		}
 	    	});
 		},//eo actionIndex
@@ -87,9 +109,72 @@ var DefaultCtrl = {
 						$('div.step-'+i).removeClass('hidden');
 					}
 			    	$.doAdjHeight();
+			    },
+			    initTaskUis = function(){
+			    	$('form.project-form input.staff-search, form.task-form input.staff-search').autocomplete({
+						minLength: 1,
+						source: function( request, response ) {
+					      $.getJSON( $('#StaffSearchUrl').val(), {
+					        term: request.term 
+					      }, function(data){
+					      	response( $.map( data, function( item ) {
+					          return {
+					            label: item.Name + '(' + item.Nickname + ')',
+					            value: item.Nickname,
+					            id: item.Id
+					          }
+					        }));
+					      } );
+					    },
+						select: function(event, ui){
+							$(event.target).next('input.charge_ids').val(ui.item.id);
+							return false;
+						}
+					});
+					$('.date-field').datepicker({dateFormat:'yy-mm-dd', minDate: new Date()});
 			    };
 
 			DefaultCtrl.scrollTop();
+
+			$( '#CreateTaskModal' ).dialog({
+		      autoOpen: false,
+		      height: 270,
+		      width: 500,
+		      modal: true,
+		      open:function(){
+		      	initTaskUis();
+		      },
+		      buttons: {
+		      	Save : function(){
+		      		$('form#TaskModalForm').ajaxSubmit({
+						success: function(response, statusText, xhr, $form){
+							$( '#CreateTaskModal' ).dialog( "close" );		
+							try{
+								response = $.parseJSON(response);
+								if(response.rlt){
+									$.ajax({
+										url:$('#UpdateTaskListUrl').val(),
+										data:{
+											project_id : $('input[name=project_id]').val()
+										},
+										type:'post',
+										success: function(result){
+											$('#TaskList').html(result);
+										}
+									});
+								}else{
+								}
+							}catch(exp){
+								console.error(exp);
+							}
+						}
+					});
+		      	},
+		      	Cancel : function() {
+          			$( this ).dialog( "close" );
+        		}
+		      }
+		    });
 
 			//date-pick fields
 			$('.date-field').datepicker({dateFormat:'yy-mm-dd', minDate: new Date()});
@@ -105,6 +190,7 @@ var DefaultCtrl = {
 			//Init text editor
 			$('.summernote').summernote({
 			  height: 200,
+			  /*
 			  toolbar: [
 			    //['style', ['style']], // no style button
 			    ['style', ['bold', 'italic', 'underline', 'clear']],
@@ -113,12 +199,29 @@ var DefaultCtrl = {
 			    ['color', ['color']],
 			    ['para', ['ul', 'ol', 'paragraph']],
 			    ['height', ['height']],
-			    //['insert', ['picture', 'link']], // no insert buttons
+			    ['insert', ['picture', 'link']], // no insert buttons
 			    ['table', ['table']]
 			    //['help', ['help']] //no help button
-			  ],
+			  ],*/
 			  codemirror: { // codemirror options
     			theme: 'monokai'
+  			  },
+  			  onImageUpload: function(files, editor, welEditable) {
+    			//console.log('image upload:', files, editor, welEditable);
+    			var data = new FormData(),
+    			    imgUploadUrl = $('#ImgUploadUrl').val();
+	            data.append('file', files[0]);
+	            $.ajax({
+	                data: data,
+	                type: 'POST',
+	                url: imgUploadUrl,
+	                cache: false,
+	                contentType: false,
+	                processData: false,
+	                success: function(imgUrl) {
+	                    editor.insertImage(welEditable, imgUrl);
+	                }
+	            });//eo ajax
   			  }
 			});
 			
@@ -223,6 +326,7 @@ var DefaultCtrl = {
 					 			departmentIds.push($(ele).val());
 					 		});
 					 		$('div.step-3').removeClass('hidden');
+					 		showSteps(11);
 					 	}else{
 					 		$(target).next('.help-block').html(result.msg).addClass('text-danger');
 					 	}
@@ -232,27 +336,22 @@ var DefaultCtrl = {
 				$event.preventDefault();
 			});//eo form.project-form::input[name=title]
 
-			$('form.project-form').on('change', 'select#ProjectTypes', function($event){
-				var typeId = parseInt($('#ProjectTypes').val(), 10),
+			//change event listener for form.project-form::select.menu-combo
+			$('form.project-form').on('change', 'select.menu-combo', function($event){
+				var typeId = parseInt($('#TypeId').val(), 10),
 				    getCategoriesByDeptIdUrl = $('#GetCategoriesByDeptIdUrl').val(),
 				    departmentIds = [];
 
 				$('select[name^=department]').each(function(idx, ele){
 		 			departmentIds.push($(ele).val());
 		 		});
-
+		 		
 				$.ajax({ url:getCategoriesByDeptIdUrl, data:{deptIds:departmentIds} })
 		 		 .done(function(result){
-		 		 	if(typeId !== 2){//TODO : Fix this magic number
-		 		 		$('div.business-items').addClass('hidden');
-		 		 		$('div.category-list').html('<input type="hidden" name="category_id" value="0" />');	
-		 		 		showSteps(11);
-						return;
-					}
-		 		 	$('div.business-items').removeClass('hidden');
+		 		 	$('div.business-items, div.step-3').removeClass('hidden');
 		 		 	$('div.category-list').html(result);
 		 		 });//eo done()
-			});
+			});//eo select.menu-combo change event listener
 
 			//keyup event listener for form.project-form::select[name=category_id]
 			//init other steps
@@ -267,6 +366,134 @@ var DefaultCtrl = {
 				showSteps(11);
 			});//eo form.project-form::select[name=category_id]
 
+			//keyup event listener for form.project-form::select#TaskNo
+			//generate task input fields
+			$('form.project-form').on('change', 'select#TaskNo', function($event){
+				var taskNo = parseInt($(this).val(), 10),
+				    url = $('#GenerateTaskTableUrl').val();
+
+				$event.preventDefault();
+
+				$.ajax({ 
+					data: { taskNo:taskNo },
+					url: url,
+					success: function(result){
+						$('#TaskTableControl').removeClass('hidden').find('#TaskTableContent').html(result);
+						initTaskUis();
+					} 
+				});
+
+			});//eo form.project-form::select#TaskNo
+
+			$('form.project-form').on('click', 'button.btn, a.function-control', function($event){
+				var cmd = $(this).attr('cmd'),
+	    		    cmdVal = $(this).attr('cmdVal'),
+	    		    target = $event.target,
+	    		    url = $('#GenerateTaskTableUrl').val();
+
+	    		switch(cmd){
+	    			case 'addTask':
+	    				$.ajax({ url:url, data: { taskNo:1, withHeader:false }, success: function(result){$(target).parents('tr').after(result);initTaskUis();} });
+	    				$event.preventDefault();
+	    				break;
+	    			case 'deleteTask':
+	    				$(target).parents('tr').remove();
+	    				$event.preventDefault();
+	    				break;
+	    			case 'submit':
+	    				//$event.preventDefault();
+	    				return;
+	    			case 'uploadFile':
+	    				$('input#TaskFile'+cmdVal).trigger('click').on('change', function(){
+	    					var files = event.target.files,
+	    					    data = new FormData(),
+	    					    fileUploadUrl = $('#TaskFileUploadUrl').val();
+	    					$.each(files, function(key, value){
+								data.append(key, value);
+							});
+							data.append('id', cmdVal);
+	    					$.ajax({
+								data: data,
+				                type: 'POST',
+				                url: fileUploadUrl,
+				                cache: false,
+				                contentType: false,
+				                processData: false,
+				                dataType:'json',
+						        success : function(data, textStatus, jqXHR){
+						        	$('#DownloadFile'+cmdVal).attr('src', data.result)
+						        }
+							});
+	    				});
+	    				$event.preventDefault();
+	    				break;
+	    			case 'addTaskForReal':
+	    				$('#CreateTaskModal').dialog('open');
+	    				break;
+	    			case 'deleteTaskForReal':
+	    				var msg = $('#DeleteTaskMsg'+cmdVal).val();
+	    				$.confirm(msg, 'Confirm', function(){
+
+	    					$('#DeleteTaskForm'+cmdVal).ajaxSubmit({
+								url: $('#DeleteTaskUrl').val(),
+								success: function(response, statusText, xhr, $form){
+									try{
+										response = $.parseJSON(response);
+										if(response.rlt){
+											$.ajax({
+												url:$('#UpdateTaskListUrl').val(),
+												data:{
+													project_id : $('input[name=project_id]').val()
+												},
+												type:'post',
+												success: function(result){
+													$('#TaskList').html(result);
+												}
+											});
+										}else{
+										}
+									}catch(exp){
+										console.error(exp);
+									}
+								}
+							});
+	    					
+	    				}, 'ui-state-error', 'ui-icon ui-icon-alert');
+	    				break;
+	    		}
+			});
+
+			$('form.project-form input.staff-search').autocomplete({
+				minLength: 1,
+				source: function( request, response ) {
+			      $.getJSON( $('#StaffSearchUrl').val(), {
+			        term: request.term 
+			      }, function(data){
+			      	response( $.map( data, function( item ) {
+		              return {
+		                label: item.Name + '(' + item.Nickname + ')',
+		                value: item.Nickname,
+		                id: item.Id
+		              }
+		            }));
+			      } );
+			    },
+				select: function(event, ui){
+					var ids = $('#VerifierIds').val() === "" ? [] : $('#VerifierIds').val().split(','),
+					    names = [];
+					if(ids.indexOf(ui.item.id) === -1){
+						ids.push(ui.item.id);
+						names.push(ui.item.value);
+						$('#ProjectVerifiers').after('<span class="badge">'+ui.item.label+'</span>');	
+					}
+					$('#VerifierIds').val(ids);
+					$('#VerifierNames').val(names);
+					$('#ProjectVerifiers').val("");
+
+					return false;
+				}
+			});
+
 			//Prevent form being subbmited
 			$('form.project-form').submit(function($event){
 
@@ -274,6 +501,9 @@ var DefaultCtrl = {
 				    value = '';
 
 				$event.preventDefault();
+
+				//$('#SubmitBtn').attr('disabled', 'disabled');
+
 				$(this).ajaxSubmit({
 					url: ajaxFormUrl,
 					beforeSubmit: function(){
@@ -304,11 +534,29 @@ var DefaultCtrl = {
 						}
 					}
 				});
-			});			
+			});//eo form.submit()			
 
 		},//eo actionAdd
 
 		actionEdit:function(){
+			$.fn.editable.defaults.mode = 'pop';
+			$('.editable').editable();
+			$('.currency_editable').editable({
+				source: [
+	              {value: 'USD', text: 'USD'},
+	              {value: 'TWD', text: 'TWD'},
+	              {value: 'RMB', text: 'RMB'}
+           		]
+			});
+			$('.category_editable').editable({
+				source: [
+	              {value: 'TODO', text: 'TODO'},
+	              {value: 'RUNNING', text: 'RUNNING'},
+	              {value: 'REVIEWING', text: 'REVIEWING'},
+	              {value: 'DONE', text: 'DONE'}
+           		]
+			});
+
 			DefaultCtrl.actionAdd();
 		}
 

@@ -47,8 +47,17 @@ $recId = $project['id'];
 	      <span class="help-block"><?php Utils::e('Project name cannot duplicate with others! Max: 100 chars; Min: 5 chars.'); ?></span>
 	    </div>
 	    <label for="EstimatedProfit" class="col-sm-2 control-label"><?php Utils::e('Estimated Profit'); ?>:</label>
-	    <div class="col-sm-10">
+	    <div class="col-sm-2">
 	    	<input id="EstimatedProfit" type="number" class="form-control disabled" name="estimated_profit" maxlength="10" minlength="5" placeholder="money here..." value="<?php echo $project['estimated_profit']; ?>" disabled required/>
+	    </div>
+	    <div class="col-sm-5">
+	    	<select name="currency_type" class="form-control">
+	    		<option value="USD" <?php echo $project['currency_type'] === 'USD' ? 'selected' : '' ?>>USD</option>
+	    		<option value="TWD" <?php echo $project['currency_type'] === 'TWD' ? 'selected' : '' ?>>TWD</option>
+	    		<option value="RMB" <?php echo $project['currency_type'] === 'RMB' ? 'selected' : '' ?>>RMB</option>
+	    	</select>
+	    </div>
+	    <div class="col-sm-10 col-sm-offset-2">
 	    	<span class="help-block"><?php Utils::e('How much profit you think this project can produce?'); ?></span>
 	    </div>
 	</div>
@@ -59,7 +68,7 @@ $recId = $project['id'];
 	    		<select name="type_id" id="ProjectTypes" class="form-control disabled" disabled>
 	    			<option value="0"><?php echo Utils::e('All...'); ?></option>
 	    			<?php foreach($projectTypes as $idx=>$type): ?>
-	    			<option <?php echo $project['type_id'] === $type['id'] ? 'selected' : ''; ?> value="<?php echo $type['id']; ?>"><?php echo $type['name']; ?></option>
+	    			<option <?php echo $project['type_id'] == $type['id'] ? 'selected' : ''; ?> value="<?php echo $type['id']; ?>"><?php echo $type['name']; ?></option>
 	    			<?php endforeach; ?>
 	    		</select>
 	    	</div>
@@ -113,7 +122,7 @@ $recId = $project['id'];
 	<div class="form-group step-9">
 		<label for="ProjectExpectingDate" class="col-sm-2 control-label"><?php Utils::e('Expecting Finish Date'); ?>:</label>
 	    <div class="col-sm-10">
-	      <input id="ProjectExpectingDate" type="text" class="form-control date-field" name="expecting_date" maxlength="10" minlength="10" placeholder="The date you wish it could be finished." value="<?php echo $project['expecting_date']; ?>" required/>
+	      <input id="ProjectExpectingDate" type="text" class="form-control date-field disabled" disabled name="expecting_date" maxlength="10" minlength="10" placeholder="The date you wish it could be finished." value="<?php echo $project['expecting_date']; ?>" required/>
 	      <span class="help-block"><?php Utils::e('When do you need this project be done?'); ?></span>
 	    </div>
 	</div>
@@ -136,19 +145,8 @@ $recId = $project['id'];
 	    </div>
 	</div>
 	<div class="form-group step-10">
-		<label for="ProjectNote" class="col-sm-2 control-label"><?php Utils::e('Task Number'); ?>:</label>
-	    <div class="col-sm-10">
-	      <select id="TaskNo" name="task_no" class="form-control">
-	      	 <?php for( $idx=1 ; $idx <= 10 ; $idx++): ?>
-	      	 <option <?php echo $project['task_no'] == $idx ? 'selected' : ''; ?> value="<?php echo $idx; ?>"><?php echo Utils::e('{n} tasks.', true, $idx); ?></option>
-	      	 <?php endfor; ?>
-	      </select>
-	      <span class="help-block"><?php Utils::e('How many requied tasks are there to finish this project? At least 1 tasks.'); ?></span>
-	    </div>
-	</div>
-	<div class="form-group step-10">
 		<label for="ProjectTask" class="col-sm-2 control-label"><?php Utils::e('Tasks'); ?>:</label>
-		<div class="col-sm-10">
+		<div id="TaskList" class="col-sm-10">
 			<table class="table table-bordered table-condensed table-striped table-hover">
 				<thead>
 					<tr>
@@ -157,46 +155,77 @@ $recId = $project['id'];
 						<th><?php Utils::e('Due Date'); ?></th>
 						<th><?php Utils::e('Responsibles'); ?></th>
 						<th><?php Utils::e('Budget'); ?></th>
-						<th width="120"><?php Utils::e('Actions'); ?></th>
+						<th><?php Utils::e('Status'); ?></th>
+						<th><?php Utils::e('Files'); ?></th>
+						<th><?php Utils::e('Actions'); ?></th>
 					</tr>
 				</thead>
 				<tbody>
-				<?php    $budget = 0;
-				         $daysLeft = 0; ?>	
-				<?php for($idx = intval($project['task_no']) ; $idx > 0 ; $idx--): ?>
-				
+				<?php    $budgetRMB = 0;
+						 $budgetUSD = 0;
+						 $budgetTWD = 0;
+				         $daysLeft = 0; 
+				?>	
+				<?php foreach($tasks as $idx=>$task): ?>
+					<?php 
+						$dateDiff = date_diff(date_create($this->today), date_create($task['expecting_date']));  
+						$dayDiff = intval($dateDiff->format('%a'));		
+						$daysLeft += $dayDiff;
+					?>
 					<tr>
-						<td>
-							<?php switch($idx){
-									case 4: echo '蒐集資料';break;
-									case 3: echo '寫計劃';break;
-									case 2: echo '試行';break;
-									case 1: echo '執行公佈';break;
-							      } ?>
+						<td><a href="#" class="editable" id="TaskContent<?php echo $task['id'] ?>" data-type="text" data-pk="<?php echo $task['id']; ?>" data-url="<?php echo $editTaskUrl, '?type=content'; ?>" data-title="Edit"><?php echo $task['content']; ?></a></td>
+						<td><a href="#" class="editable" id="TaskDeliverable<?php echo $task['id'] ?>" data-type="text" data-pk="<?php echo $task['id']; ?>" data-url="<?php echo $editTaskUrl, '?type=deliverable'; ?>" data-title="Edit"><?php echo $task['deliverable']; ?></a></td>
+						<td><?php 
+								echo substr($task['expecting_date'], 0, 10); 
+								if($dayDiff > 0){
+							  	  echo Utils::eBadge($dayDiff.' days', true, 'badge-info');
+							  	}else{
+							  	  echo Utils::eBadge('DUED!!', true, 'badge-danger');
+							  	}
+							?></td>
+						<td><?php echo $task['in_charge_names']; ?></td>
+						<td width="120"><?php 
+								switch($task['currency_type']){
+									case 'RMB': $budgetRMB += $task['budget']; break;
+									case 'USD': $budgetUSD += $task['budget']; break;
+									case 'TWD': $budgetTWD += $task['budget']; break;
+								}
+							?>
+							<a href="#" class="editable" id="TaskBudget<?php echo $task['id'] ?>" data-type="number" data-pk="<?php echo $task['id']; ?>" data-url="<?php echo $editTaskUrl, '?type=budget'; ?>" data-title="Edit" data-value="<?php echo $task['budget']; ?>"><?php echo number_format($task['budget']); ?></a>
+							<a href="#" class="currency_editable" id="TaskCurrencyType<?php echo $task['id'] ?>" data-type="select" data-pk="<?php echo $task['id']; ?>" data-url="<?php echo $editTaskUrl, '?type=currency_type'; ?>" data-title="Edit" data-value="<?php echo $task['currency_type']; ?>"><?php echo $task['currency_type']; ?></a>
 						</td>
 						<td>
-							<?php switch($idx){
-									case 4: echo '當前包裝作業流程資料';break;
-									case 3: echo '流程改善計劃';break;
-									case 2: echo '改善流程實際數據';break;
-									case 1: echo '實施流程後改善數據證明';break;
-							      } ?>
+							<a href="#" class="category_editable" id="TaskCategory<?php echo $task['id'] ?>" data-type="select" data-pk="<?php echo $task['id']; ?>" data-url="<?php echo $editTaskUrl, '?type=category'; ?>" data-title="Edit" data-value="<?php echo $task['category']; ?>"><?php echo $task['category']; ?></a>
 						</td>
-						<td><span class="badge badge-danger"> +2days </span></td>
-						<td>Aitch</td>
-						<td><?php $budget += ($idx*1000); echo 'RMB $',number_format($budget, 2); ?></td>
-						<td class="text-center">
+						<td width="50">
+							<?php if($task['file'] !== ''): ?>
+							<a id="DownloadFile<?php echo $task['id']; ?>" class="function-control" href="<?php echo $task['file'];  ?>" target="_blank"><?php Utils::icon('download'); ?></a>
+							<?php endif; ?>
+							<a class="function-control" href="#" cmd="uploadFile" cmdVal="<?php echo $task['id']; ?>"><?php Utils::icon('upload'); ?></a>
+							<input id="TaskFile<?php echo $task['id']; ?>" type="file" class="form-control input-sm hidden" name="task[files][]" /> 
+						</td>
+						<td class="text-center" width="80">
 							<div class="btn-group">
-								<button class="btn btn-xs btn-info tipinfos" cmd="printRecord" cmdVal="<?php echo $recId; ?>" data-toggle="tooltip" data-placement="bottom" title="<?php Utils::e('Print'); ?>"><?php Utils::icon('print'); ?></button>
-								<button class="btn btn-xs btn-info tipinfos" cmd="viewRecord" cmdVal="<?php echo $recId; ?>" data-toggle="tooltip" data-placement="bottom" title="<?php Utils::e('View'); ?>"><?php Utils::icon('search'); ?></button>
-								<button class="btn btn-xs btn-info tipinfos" cmd="editRecord" cmdVal="<?php echo $recId; ?>" data-toggle="tooltip" data-placement="bottom" title="<?php Utils::e('Edit'); ?>"><?php Utils::icon('edit'); ?></button>
-								<button class="btn btn-xs btn-info tipinfos" cmd="delteRecord" cmdVal="<?php echo $recId; ?>" data-toggle="tooltip" data-placement="bottom" title="<?php Utils::e('Cancel'); ?>"><?php Utils::icon('trash'); ?></button>
+								<?php if($idx >= (count($tasks) - 1) ): ?>
+								<button class="btn btn-xs btn-info tipinfos newTask<?php echo $idx; ?>" cmd="addTaskForReal" cmdVal="" data-toggle="tooltip" data-placement="bottom" title="<?php Utils::e('Plus'); ?>" type="button"><?php Utils::icon('plus'); ?></button>
+								<?php endif; ?>
+								<button class="btn btn-xs btn-info tipinfos deleteTask<?php echo $idx; ?>" cmd="deleteTaskForReal" cmdVal="<?php echo $task['id']; ?>" data-toggle="tooltip" data-placement="bottom" title="<?php Utils::e('Delete'); ?>" type="button"><?php Utils::icon('trash'); ?></button>
+								<form id="DeleteTaskForm<?php echo $task['id']; ?>" class="hidden" action="<?php echo $deleteTaskUrl; ?>" method="post">
+									<input type="hidden" name="project_id" value="<?php echo $this->encode($project['id']); ?>"/>
+									<input type="hidden" name="task_id" value="<?php echo $this->encode($task['id']); ?>"/>
+								</form>
+								<input type="hidden" id="DeleteTaskMsg<?php echo $task['id']; ?>" value="<?php Utils::e('Are you sure about deleting this task?') ?>" />
 							</div>
 						</td>
 					</tr>
-				<?php endfor; ?>
+				<?php endforeach; ?>
 					<tr>
-						<td colspan="6" class="text-right">Total Budget: NTD $<?php echo number_format($budget, 2); ?></td>
+						<td colspan="8" class="text-right">
+							<?php echo $daysLeft  > 0 ? Utils::e('<p>Days Left: dum(days)', false, array('dum'=>$daysLeft)) : Utils::eBadge('DUED!!', true, 'badge-danger'); ?>
+							<?php echo $budgetRMB > 0 ? Utils::e('<p>Budget: num(RMB)</p>', false, array('num'=>number_format($budgetRMB))) : ''; ?>
+							<?php echo $budgetUSD > 0 ? Utils::e('<p>Budget: num(USD)</p>', false, array('num'=>number_format($budgetUSD))) : ''; ?>
+							<?php echo $budgetTWD > 0 ? Utils::e('<p>Budget: num(TWD)</p>', false, array('num'=>number_format($budgetTWD))) : ''; ?>
+						</td>
 					</tr>
 				</tbody>
 			</table>
@@ -210,3 +239,66 @@ $recId = $project['id'];
 </form>
 
 <!-- Ajax Parameters -->
+<input type="hidden" id="GetListUrl" value="<?php echo $getMenuAction; ?>"/>
+<input type="hidden" id="GetContactUrl" value="<?php echo $getContactAction; ?>"/>
+<input type="hidden" id="CheckDeptOpenUrl" value="<?php echo $checkDeptOpenUrl; ?>"/>
+<input type="hidden" id="CheckProjectNameDupUrl" value="<?php echo $checkProjectNameDupUrl; ?>" />
+<input type="hidden" id="GetCategoriesByDeptIdUrl" value="<?php echo $getCategoriesByDeptIdUrl; ?>" />
+<input type="hidden" id="ProjectAddUrl" value="<?php echo $projectAddUrl; ?>" />
+<input type="hidden" id="GenerateTaskTableUrl" value="<?php echo $generateTaskTableUrl; ?>" />
+<input type="hidden" id="ImgUploadUrl" value="<?php echo $imgUploadUrl; ?>" />
+<input type="hidden" id="StaffSearchUrl" value="<?php echo $staffSearchUrl; ?>" />
+<input type="hidden" id="TaskFileUploadUrl" value="<?php echo $editTaskUrl, '?type=task_file'; ?>" />
+<input type="hidden" id="UpdateTaskListUrl" value="<?php echo $updateTaskListUrl; ?>" />
+<input type="hidden" id="DeleteTaskUrl" value="<?php echo $deleteTaskUrl; ?>" />
+
+<!-- Modal Forms -->
+<div id="CreateTaskModal" title="<?php echo Utils::e('Create New Task'); ?>">
+  <form id="TaskModalForm" class="form-horizontal task-form ajax-form" role="form" method="post" action="<?php echo $addTaskAction; ?>">
+  	<input type="hidden" name="project_id" value="<?php echo $this->encode($project['id']); ?>"/>
+  	<table class="table table-bordered table-condensed table-striped table-hover">
+		<thead>
+			<tr>
+				<th><?php Utils::e('Description'); ?></th>
+				<th><?php Utils::e('Deliverable'); ?></th>
+				<th><?php Utils::e('Due Date'); ?></th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td>
+					<input type="text" class="form-control input-sm" name="task[descriptions][]" maxlength="255" /> 
+				</td>
+				<td>
+					<input type="text" class="form-control input-sm" name="task[deliverables][]" maxlength="255" /> 
+				</td>
+				<td>
+					<input type="text" class="form-control input-sm date-field" name="task[duedates][]" maxlength="10" /> 
+				</td>
+			</tr>
+			<tr>
+				<th><?php Utils::e('Responsibles'); ?></th>
+				<th><?php Utils::e('Budget'); ?></th>
+				<th><?php Utils::e('Files'); ?></th>
+			</tr>
+			<tr>
+				<td>
+					<input type="text" class="form-control input-sm staff-search" name="task[responsibles][]" maxlength="255" /> 
+					<input type="hidden" class="form-control input-sm charge_ids" name="task[in_charges][]" /> 
+				</td>
+				<td width="180">
+					<input type="number" class="form-control input-sm pull-left task-budget-number-txt" name="task[budgets][]" maxlength="12" /> 
+					<select name="task[currency_types][]" class="form-control pull-left input-sm task-budget-combo">
+			    		<option value="USD">USD</option>
+			    		<option value="TWD">TWD</option>
+			    		<option value="RMB">RMB</option>
+		    		</select>
+				</td>
+				<td>
+					<input type="file" class="form-control input-sm" name="task[files][]" /> 
+				</td>
+			</tr>
+		</tbody>
+	</table>
+  </form>
+</div>
