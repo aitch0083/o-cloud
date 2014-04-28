@@ -64,6 +64,9 @@ class SystemLeftMenu extends AppWidget{
                             </li>
                         </ul>
                     </li>';                    
+        $optHtml .= '<li class="active">
+                        <a href="#" class="menuBtn" cmd="changeWorkspace" cmdVal="/ticket/department">'.$this->icon('list-alt').' Users</span></a>
+                    </li>';                    
         //Iterate the items
 
         foreach($this->items as $idx=>$item){
