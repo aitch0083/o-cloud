@@ -3,6 +3,7 @@
 * All the variables are defined in the DefaultController
 */
 $recId = $project['id'];
+$projectType = '';
 ?>
 
 <form class="form-horizontal project-form ajax-form" role="form" method="post" action="<?php echo $editAction; ?>">
@@ -68,6 +69,7 @@ $recId = $project['id'];
 	    		<select name="type_id" id="ProjectTypes" class="form-control disabled" disabled>
 	    			<option value="0"><?php echo Utils::e('All...'); ?></option>
 	    			<?php foreach($projectTypes as $idx=>$type): ?>
+	    			<?php if($project['type_id'] == $type['id']){ $projectType = strtolower($type['name']); }  ?>
 	    			<option <?php echo $project['type_id'] == $type['id'] ? 'selected' : ''; ?> value="<?php echo $type['id']; ?>"><?php echo $type['name']; ?></option>
 	    			<?php endforeach; ?>
 	    		</select>
@@ -94,28 +96,28 @@ $recId = $project['id'];
 	<div class="form-group step-4">
 	    <label for="ProjectPurpose" class="col-sm-2 control-label"><?php Utils::e('Purpose'); ?>:</label>
 	    <div class="col-sm-10">
-	      <input id="ProjectPurpose" type="text" class="form-control" name="purpose" maxlength="100" minlength="5" placeholder="name your purpose" value="<?php echo $project['purpose']; ?>" required/>
+	      <a href="#" class="editable" id="ProjectPurpose<?php echo $task['id'] ?>" data-type="textarea" data-pk="<?php echo $project['id']; ?>" data-url="<?php echo $editAction, '?type=purpose'; ?>" data-title="Edit" data-value="<?php echo $project['purpose']; ?>"><?php echo ($project['purpose']); ?></a>
 	      <span class="help-block"><?php Utils::e('Describe why you need this project.'); ?></span>
 	    </div>
 	</div>
 	<div class="form-group step-5">
 	    <label for="ProjectTargets" class="col-sm-2 control-label"><?php Utils::e('Targets'); ?>:</label>
 	    <div class="col-sm-10">
-	      <input id="ProjectTargets" type="text" class="form-control" name="demands" maxlength="100" minlength="5" placeholder="Who can benefit from this project" value="<?php echo $project['demands']; ?>" required/>
+	      <a href="#" class="editable" id="ProjectDemands<?php echo $task['id'] ?>" data-type="textarea" data-pk="<?php echo $project['id']; ?>" data-url="<?php echo $editAction, '?type=demands'; ?>" data-title="Edit" data-value="<?php echo $project['demands']; ?>"><?php echo ($project['demands']); ?></a>
 	      <span class="help-block"><?php Utils::e('Who and what will benefit from this project.'); ?></span>
 	    </div>
 	</div>
 	<div class="form-group step-7">
 		<label for="ProjectRange" class="col-sm-2 control-label"><?php Utils::e('Scope'); ?>:</label>
 	    <div class="col-sm-10">
-	      <input id="ProjectRange" type="text" class="form-control" name="apply_range" maxlength="100" minlength="5" placeholder="How many departments will be effected by this project?" value="<?php echo $project['apply_range']; ?>" required/>
+	      <a href="#" class="editable" id="ProjectApplyRange<?php echo $task['id'] ?>" data-type="textarea" data-pk="<?php echo $project['id']; ?>" data-url="<?php echo $editAction, '?type=apply_range'; ?>" data-title="Edit" data-value="<?php echo $project['apply_range']; ?>"><?php echo ($project['apply_range']); ?></a>
 	      <span class="help-block"><?php Utils::e('How many departments will be effected by this project?'); ?></span>
 	    </div>
 	</div>
 	<div class="form-group step-8">
 		<label for="ProjectVerifiers" class="col-sm-2 control-label"><?php Utils::e('Verifiers'); ?>:</label>
 	    <div class="col-sm-10">
-	      <input id="ProjectVerifiers" type="text" class="form-control" name="verifiers" maxlength="100" minlength="5" placeholder="Who can help you with verifying this project" value="<?php echo $project['verifiers']; ?>" required/>
+	      <input id="ProjectVerifiers" type="text" class="form-control disabled" name="verifiers" maxlength="100" minlength="5" placeholder="Who can help you with verifying this project" value="<?php echo $project['verifier_names']; ?>" required disabled/>
 	      <span class="help-block"><?php Utils::e('Who can help you with verifying this project'); ?></span>
 	    </div>
 	</div>
@@ -147,6 +149,7 @@ $recId = $project['id'];
 	<div class="form-group step-10">
 		<label for="ProjectTask" class="col-sm-2 control-label"><?php Utils::e('Tasks'); ?>:</label>
 		<div id="TaskList" class="col-sm-10">
+			<?php if(count($tasks)): ?>
 			<table class="table table-bordered table-condensed table-striped table-hover">
 				<thead>
 					<tr>
@@ -229,11 +232,20 @@ $recId = $project['id'];
 					</tr>
 				</tbody>
 			</table>
+			<?php else: ?>
+			<button class="btn btn-xs btn-info tipinfos newTask<?php echo $idx; ?>" cmd="addTaskForReal" cmdVal="" data-toggle="tooltip" data-placement="bottom" title="<?php Utils::e('Plus'); ?>" type="button"><?php Utils::icon('plus'); ?></button>
+			<?php endif; ?>
 		</div>
 	</div>
 	<div class="form-group step-11">
 	    <div class="col-sm-offset-2 col-sm-10">
-	      <button type="submit" class="btn btn-default"><?php Utils::e('Submit'); ?></button>
+	      <div id="AuditMsg" class="alert alert-info"><?php Utils::e('Auditor: name(email)', true, array('name'=>$auditor['Name'], 'email'=>$auditor['Mail'])); ?></div>
+	      <div class="btn-group">
+		      <button type="button" cmd="save_project" cmdVal="<?php echo $recId; ?>" class="btn btn-default"><?php Utils::e('Save'); ?></button>
+		      <?php if(!$project['is_commited']): ?>
+		      <button type="button" cmd="commit_project" cmdVal="<?php echo $recId; ?>" class="btn btn-default"><?php Utils::e('Commit'); ?></button>
+		  <?php endif; ?>
+	  	  </div>
 	    </div>
   	</div>
 </form>
@@ -251,6 +263,9 @@ $recId = $project['id'];
 <input type="hidden" id="TaskFileUploadUrl" value="<?php echo $editTaskUrl, '?type=task_file'; ?>" />
 <input type="hidden" id="UpdateTaskListUrl" value="<?php echo $updateTaskListUrl; ?>" />
 <input type="hidden" id="DeleteTaskUrl" value="<?php echo $deleteTaskUrl; ?>" />
+<input type="hidden" id="UpdateProjectUrl" value="<?php echo $updateProjectUrl; ?>" />
+<input type="hidden" id="CommitUrl" value="<?php echo $editAction, '?type=is_commited'; ?>" />
+<input type="hidden" id="CommitConfirmMsg" value="<?php Utils::e('Are you sure you want to commit? Once you commit, this project is offically running and cannot be stopped.'); ?>" />
 
 <!-- Modal Forms -->
 <div id="CreateTaskModal" title="<?php echo Utils::e('Create New Task'); ?>">
@@ -302,3 +317,9 @@ $recId = $project['id'];
 	</table>
   </form>
 </div>
+
+<form class="hidden" id="CommitForm" method="post" action="<?php echo $commitAction; ?>">
+	<input type="hidden" id="project_id" name="project_id" value="<?php echo $recId; ?>" />
+	<input type="hidden" id="leader_id" name="leader_id" value="<?php echo $project['leader_id']; ?>" />
+	<input type="hidden" id="project_type" name="project_type" value="<?php echo $projectType; ?>" />
+</form>

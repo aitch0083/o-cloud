@@ -79,7 +79,7 @@ class Task extends CActiveRecord{
 			$sql = 'INSERT INTO '.$this->tableName().' (id, project_id, user_id, category, content, deliverable, expecting_date, finished_date, file, in_charge, in_charge_names, budget, currency_type, created, modified) VALUES';
 			for($idx = 0 ; $idx < count($descriptions) ; $idx++){
 				$fileUrl = '';
-				if(!$files['error']['files'][$idx] && $files['tmp_name']['files'][$idx] !== ''){
+				if(!$files['error']['files'][$idx] && $files['name']['files'][$idx] !== ''){
 					$fileUrl = $this->uploadFile($files['name']['files'][$idx], $files['tmp_name']['files'][$idx]);
 				}else{
 					$fileUrl = '';
@@ -128,6 +128,10 @@ class Task extends CActiveRecord{
 	}
 
 	private function uploadFile($filename, $tmpname){
+
+		if($filename === ''){
+			return '';
+		}
 
 		$uploadFolder = Yii::app()->basePath.'/../files/task_files/';
 		

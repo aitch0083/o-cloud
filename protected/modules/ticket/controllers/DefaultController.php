@@ -233,9 +233,10 @@ class DefaultController extends Controller{
 
 		$project = Project::model()->findByPk($id);
 		$contact = $project->contact->staff;
+		$auditor = Staff::model()->findByPk($project['leader_id']); 
 		$accessToken = $this->getAccessToken();
 		$prefix = '/'.$this->module->id.'/'.$this->id;
-		$editAction = $prefix.'/'.$this->action->id;
+		$editAction = $prefix.'/updateField';
 
 		//fetch main project types
 		$projectModel = new Project();
@@ -263,6 +264,8 @@ class DefaultController extends Controller{
 		$editTaskUrl			  = $prefix.'/editTask';
 		$updateTaskListUrl        = $prefix.'/updateTaskList';
 		$deleteTaskUrl			  = $prefix.'/deleteTask';
+		$updateProjectUrl         = $prefix.'/updateFields';
+		$commitAction 			  = $prefix.'/commit';
 		$accessToken = $this->getAccessToken();
 
 		$taskModel = new Task();
@@ -279,6 +282,7 @@ class DefaultController extends Controller{
 								      'getMenuAction', 'getContactAction', 'checkProjectNameDupUrl',
 								      'getCategoriesByDeptIdUrl', 'checkDeptOpenUrl', 'projectAddUrl', 'generateTaskTableUrl',
 								      'imgUploadUrl', 'staffSearchUrl', 'editTaskUrl', 'updateTaskListUrl', 'deleteTaskUrl',
+								      'updateProjectUrl', 'auditor', 'commitAction',
 								      'accessToken'));
 	}
 
@@ -484,7 +488,7 @@ class DefaultController extends Controller{
 
 	        echo '/files/user_uploads/' . $filename;//change this UR
     	}else{
-    		echo 'Image Upload Failed! Details:'.$file['error'];
+    		echo 'Image Upload Failed! Details:'.print_r($file, true);
     	}
 	}
 
@@ -547,6 +551,101 @@ class DefaultController extends Controller{
 		}
 
 		echo $rlt ? json_encode(array('rlt'=>true, 'msg'=>Utils::e('Task Deleted', false))) : json_encode(array('rlt'=>false, 'msg'=>Utils::e('Unable to delete task.', false)));
+	}
+
+	public function actionUpdateField($type){
+		if(!Yii::app()->request->isAjaxRequest){
+			return;
+		}
+
+		$projectModel = new Project();
+		$updateRlt = array(
+			'rlt'=>false,
+			'msg'=>''
+		);
+		
+		switch($type){
+			default:
+				$pk = Yii::app()->request->getPost('pk');
+				$value = Yii::app()->request->getPost('value');
+				$updateRlt['rlt'] = $projectModel->updateField($type, $value, $pk);
+				$updateRlt['msg'] = $updateRlt['rlt'] ? Utils::e('Field Updated.', false) : Utils::e('Field Update Failed.' ,false);
+				break;
+		}
+		
+		echo json_encode($updateRlt);
+	}
+
+	public function actionUpdateFields(){
+		if(!Yii::app()->request->isAjaxRequest){
+			return;
+		}
+
+		$projectModel = new Project();
+		$updateRlt = array(
+			'rlt'=>false,
+			'msg'=>''
+		);
+		
+		$pk = Yii::app()->request->getPost('pk');
+		$values = Yii::app()->request->getPost('data');
+		$updateRlt['rlt'] = $projectModel->updateFields($values, $pk);
+		$updateRlt['msg'] = $updateRlt['rlt'] ? Utils::e('Fields Updated.', false) : Utils::e('Fields Update Failed.' ,false);
+		
+		echo json_encode($updateRlt);	
+	}
+
+	public function actionCommit(){
+		if(!Yii::app()->request->isAjaxRequest){
+			return;
+		}
+
+		$projectModel = new Project();
+		$updateRlt = array(
+			'rlt'=>false,
+			'msg'=>''
+		);
+
+		$id = Yii::app()->request->getPost('project_id');		
+		$type = Yii::app()->request->getPost('project_type');
+		$project = Project::model()->findByPk($id);
+		$user = User::model()->findByPk($project['user_id']);
+		$staff = $user->staff;
+
+		$userRec = Yii::app()->user->getState('user_rec');
+
+		switch($type){
+			case 'project':
+				break;
+			case 'process':
+				break;
+			case 'peripheral':
+				//notify leader
+				$leaderId = Yii::app()->request->getPost('leader_id');
+				$leaderStaff = Staff::model()->findByPk($leaderId);
+				if($staff){
+					$project->is_commited = 1;
+					$project->save();
+					//Log commite time
+					$project->writeLog($userRec['Id'], 'COMMIT', $id);
+					//email $staff
+					$mail=Yii::app()->Smtpmail;
+			        $mail->SetFrom($staff['Mail'], 'From '.$staff['Name']);
+			        $mail->Subject = Utils::e('Please verify and audit the project proposed by proposer. Project[project_title]', false, array('proposer'=>$staff['Name'], 'project_title'=>$project['title']));
+			        $mail->MsgHTML(Utils::e('Please login into <a href="url">Click Me</a>', false, array('url'=>Yii::app()->createAbsoluteUrl('/ticket/default/audit'))));
+			        $mail->AddAddress($leaderStaff['Mail'], 'To '.$leaderStaff['Mail']);
+			        $mail->Send();
+			        $updateRlt['rlt'] = true;
+					$updateRlt['msg'] = Utils::e('Project commited. And auditor had been notified', false, array('auditor'=>$leaderStaff['Name']));
+					$updateRlt['mailMsg'] = $mail->ErrorInfo.' TO '.$leaderStaff['Mail'];
+				}else{
+					$updateRlt['rlt'] = false;
+					$updateRlt['msg'] = Utils::e('Unable to commit, because no valid staff record!', false);
+				}
+				break;
+		}
+
+		echo json_encode($updateRlt);	
 	}
 
 }

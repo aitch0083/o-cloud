@@ -48,7 +48,7 @@ class Project extends CActiveRecord{
 		// will receive user inputs.
 		return array(
 			array('department_id, category_id, user_id, type_id, title, purpose, currency_type,
-				   demands, acceptance, apply_range, verifiers, expecting_date, finished_date, estimated_profit,
+				   demands, acceptance, apply_range, verifiers, verifier_names, expecting_date, finished_date, estimated_profit,
 				   contact_id, rewards', 'required')
 		);
 	}
@@ -64,7 +64,12 @@ class Project extends CActiveRecord{
 				self::BELONGS_TO,
 				'User', 
 				'contact_id'
-			)//eo contact
+			),//eo contact
+			'auditor'=>array(
+				self::BELONGS_TO,
+				'User', 
+				'leader_id'
+			)
 		);
 	}
 
@@ -219,5 +224,30 @@ class Project extends CActiveRecord{
 		$command->bindParam(':operation', $operation);
 		$command->bindParam(':project_id', $projectId);
 		return $command->execute();
+	}
+
+	public function updateField($field, $value, $id){
+		$task = self::model()->findByPk($id);
+		$task->$field = $value;
+		return $task->save();
+	}
+
+	public function updateFields($values, $id){
+		$connection = self::$db;
+		$transaction = $connection->beginTransaction();
+		try{
+			$sql = '';
+			foreach($values as $idx=>$item){
+				if($item['value'] !== ''){
+					$sql = 'UPDATE `oc_projects` SET '.$item['field'].'=:value WHERE id=:id';
+					$connection->createCommand($sql)->bindValue(':value', $item['value'])->bindValue(':id', $id)->execute();
+				}
+			}
+			$transaction->commit();
+			return true;
+		}catch(Exception $exp){
+			$transaction->rollback();
+			return false;
+		}
 	}
 }

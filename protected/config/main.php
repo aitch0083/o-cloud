@@ -123,6 +123,16 @@ return array(
 		'messages' => array(
            'class' => 'CPhpMessageSource',
            'onMissingTranslation' => array('Ei18n', 'missingTranslation')
+        ),
+        'Smtpmail'=>array(
+            'class'=>'application.extensions.smtpmail.PHPMailer',
+            'Host'=>"ozaki.com.tw",
+            'Username'=>'aitch@ozaki.com.tw',
+            'Password'=>'Jek0375abd',
+            'Mailer'=>'smtp',
+            'Port'=>587,
+            'SMTPAuth'=>true,
+            'SMTPSecure' => 'tls',
         )
 	),
 

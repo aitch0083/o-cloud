@@ -3,6 +3,25 @@ var DefaultCtrl = {
 	    scrollTop:function(){
 	    	$(window.parent.document).scrollTop(0);
 	    },
+	    initEditable:function(){
+	    	$.fn.editable.defaults.mode = 'pop';
+			$('.editable').editable();
+			$('.currency_editable').editable({
+				source: [
+	              {value: 'USD', text: 'USD'},
+	              {value: 'TWD', text: 'TWD'},
+	              {value: 'RMB', text: 'RMB'}
+           		]
+			});
+			$('.category_editable').editable({
+				source: [
+	              {value: 'TODO', text: 'TODO'},
+	              {value: 'RUNNING', text: 'RUNNING'},
+	              {value: 'REVIEWING', text: 'REVIEWING'},
+	              {value: 'DONE', text: 'DONE'}
+           		]
+			});
+	    },
 		actionIndex:function(){
 			var gridTableTarget = '#GridTable',
 			    gridTableUrl = $('#GridTableUrl').val(),
@@ -134,6 +153,7 @@ var DefaultCtrl = {
 					$('.date-field').datepicker({dateFormat:'yy-mm-dd', minDate: new Date()});
 			    };
 
+
 			DefaultCtrl.scrollTop();
 
 			$( '#CreateTaskModal' ).dialog({
@@ -160,6 +180,7 @@ var DefaultCtrl = {
 										type:'post',
 										success: function(result){
 											$('#TaskList').html(result);
+											DefaultCtrl.initEditable();
 										}
 									});
 								}else{
@@ -190,19 +211,6 @@ var DefaultCtrl = {
 			//Init text editor
 			$('.summernote').summernote({
 			  height: 200,
-			  /*
-			  toolbar: [
-			    //['style', ['style']], // no style button
-			    ['style', ['bold', 'italic', 'underline', 'clear']],
-			    ['font', ['strike']],
-			    ['fontsize', ['fontsize']],
-			    ['color', ['color']],
-			    ['para', ['ul', 'ol', 'paragraph']],
-			    ['height', ['height']],
-			    ['insert', ['picture', 'link']], // no insert buttons
-			    ['table', ['table']]
-			    //['help', ['help']] //no help button
-			  ],*/
 			  codemirror: { // codemirror options
     			theme: 'monokai'
   			  },
@@ -460,6 +468,37 @@ var DefaultCtrl = {
 	    					
 	    				}, 'ui-state-error', 'ui-icon ui-icon-alert');
 	    				break;
+	    			case 'save_project':
+	    				$.ajax({
+	    					url: $('#UpdateProjectUrl').val(),
+	    					type: 'post',
+	    					dataType: 'json',
+	    					data:{
+	    						pk:cmdVal,
+	    						data:[
+	    							{ field:'acceptance', value:$('#ProjectAcceptance').code() },
+	    							{ field:'note', value:$('#ProjectNote').code() }
+	    						]
+	    					},
+	    					success:function(result){
+	    						console.info(result);
+	    					}
+	    				});
+	    				break;
+	    			case 'commit_project':
+	    				var msg = $('#CommitConfirmMsg').val();
+	    				$.confirm(msg, 'Confirm', function(){
+	    					$('#CommitForm').ajaxSubmit({
+	    						dataType:'json',
+	    						success: function(result){
+	    							if(result.rlt){
+	    								$('#AuditMsg').html(result.msg);
+	    								$(target).remove();
+	    							}
+	    						}
+	    					});
+	    				}, 'ui-state-error', 'ui-icon ui-icon-alert');//eo confirm()
+	    				break;
 	    		}
 			});
 
@@ -480,12 +519,13 @@ var DefaultCtrl = {
 			    },
 				select: function(event, ui){
 					var ids = $('#VerifierIds').val() === "" ? [] : $('#VerifierIds').val().split(','),
-					    names = [];
+					    names = $('#VerifierNames').val() === "" ? [] : $('#VerifierNames').val().split(',');
 					if(ids.indexOf(ui.item.id) === -1){
 						ids.push(ui.item.id);
 						names.push(ui.item.value);
 						$('#ProjectVerifiers').after('<span class="badge">'+ui.item.label+'</span>');	
 					}
+					names = names.join(',') ;
 					$('#VerifierIds').val(ids);
 					$('#VerifierNames').val(names);
 					$('#ProjectVerifiers').val("");
@@ -502,7 +542,7 @@ var DefaultCtrl = {
 
 				$event.preventDefault();
 
-				//$('#SubmitBtn').attr('disabled', 'disabled');
+				$('#SubmitBtn').attr('disabled', 'disabled');
 
 				$(this).ajaxSubmit({
 					url: ajaxFormUrl,
@@ -530,7 +570,7 @@ var DefaultCtrl = {
 							}else{
 							}
 						}catch(exp){
-							console.error(exp);
+							//console.error(exp);
 						}
 					}
 				});
@@ -539,25 +579,8 @@ var DefaultCtrl = {
 		},//eo actionAdd
 
 		actionEdit:function(){
-			$.fn.editable.defaults.mode = 'pop';
-			$('.editable').editable();
-			$('.currency_editable').editable({
-				source: [
-	              {value: 'USD', text: 'USD'},
-	              {value: 'TWD', text: 'TWD'},
-	              {value: 'RMB', text: 'RMB'}
-           		]
-			});
-			$('.category_editable').editable({
-				source: [
-	              {value: 'TODO', text: 'TODO'},
-	              {value: 'RUNNING', text: 'RUNNING'},
-	              {value: 'REVIEWING', text: 'REVIEWING'},
-	              {value: 'DONE', text: 'DONE'}
-           		]
-			});
-
 			DefaultCtrl.actionAdd();
+			DefaultCtrl.initEditable();
 		}
 
 	}, //eo DefaultCtrl
