@@ -53,7 +53,7 @@ class TblUser extends CActiveRecord
 	{
 		return array(
 			'id' => 'ID',
-			'username' => 'Username',
+			'username' => 'Account',
 			'password' => 'Password',
 			'email' => 'Email',
 		);

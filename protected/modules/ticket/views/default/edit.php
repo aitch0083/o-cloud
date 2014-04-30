@@ -10,7 +10,7 @@ $projectType = '';
 	
 	<?php $this->widget('widgets.BreadCrumbs', array('items'=>$crumbs)); ?>
 	
-	<legend id="ProjectFormLegend"><?php Utils::icon('plus'); Utils::e('Edit Project::'.$project['title']); ?></legend>
+	<legend id="ProjectFormLegend"><?php Utils::icon('plus'); Utils::e('Edit Project::project_title', true, array('project_title'=>$project['title'])); ?></legend>
 	<!-- ACCESS TOKEN -->
 	<input type="hidden" id="AccessToken" name="access_token" value="<?php echo $accessToken; ?>" />
 	<!-- CONTACT -->

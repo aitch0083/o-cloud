@@ -51,7 +51,7 @@ class SystemLeftMenu extends AppWidget{
                     </li>';    
         */                
         $optHtml .= '<li class="active">
-                        <a href="#">'.$this->icon('list-alt').' Projects <span class="fa arrow"></span></a>
+                        <a href="#">'.$this->icon('list-alt').' '.Utils::e('Projects', false).' <span class="fa arrow"></span></a>
                         <ul class="nav nav-second-level" style="height: auto;">
                             <li>
                                 <a href="#" class="menuBtn" cmd="changeWorkspace" cmdVal="/ticket/default/index?fromDepartmentId='.$this->staffRecord['BranchId'].'">'.$this->icon('chevron-right').Utils::e('To Others', false).'</a>

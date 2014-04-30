@@ -67,7 +67,7 @@ class User extends CActiveRecord{
 	 */
 	public function attributeLabels(){
 		return array(
-			'uName' => Yii::t('yii', 'Useranme'),
+			'uName' => Yii::t('yii', 'Username'),
 			'uPwd' => Yii::t('yii', 'Password')
 		);
 	}

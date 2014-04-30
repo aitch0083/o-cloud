@@ -29,7 +29,7 @@ class Controller extends CController
 
 	public function beforeAction($action) {
    	 	if( parent::beforeAction($action) ) {
-	        /* @var $cs CClientScript */
+   	 		/* @var $cs CClientScript */
 	        $cs = Yii::app()->clientScript;
 	        $cs->registerPackage('jquery');
 	        $cs->registerScriptFile( Yii::app()->getBaseUrl() . '/js/bootstrap.min.js', CClientScript::POS_END);
@@ -59,6 +59,8 @@ class Controller extends CController
 			}
 
 			$this->today = date('Y-m-d');
+
+			Yii::app()->language = 'zh_tw';
 
 	        return true;
     	}

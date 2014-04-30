@@ -159,9 +159,9 @@ $addAction = '/'.$this->module->id.'/'.$this->id.'/add';
 							<?php endif; ?>
 
 							<!-- Action Parameters -->
-							<input type="hidden" id="AcceptProjectMsg<?php echo $recId; ?>" value="<?php Utils::e('Are you sure about accepting this project? '.chr(10).'Project:['.$record['title'].'] '.chr(10).' Once accepted, it cannot be reversed!'); ?>" />
-							<input type="hidden" id="DeclineProjectMsg<?php echo $recId; ?>" value="<?php Utils::e('Are you sure about declining this project? '.chr(10).'Project:['.$record['title'].'] '.chr(10).' Once declined, it cannot be reversed!'); ?>" />
-							<input type="hidden" id="DeleteProjectMsg<?php echo $recId; ?>" value="<?php Utils::e('Are you sure about delete this project? '.chr(10).'Project:['.$record['title'].'] '.chr(10).' Once deleted, it cannot be reversed!'); ?>" />
+							<input type="hidden" id="AcceptProjectMsg<?php echo $recId; ?>" value="<?php Utils::e('Are you sure about accepting this project? Project:[project_title]. Once accepted, it cannot be reversed!', true, array('project_title'=>$record['title'])); ?>" />
+							<input type="hidden" id="DeclineProjectMsg<?php echo $recId; ?>" value="<?php Utils::e('Are you sure about declining this project? Project:[project_title]. Once declined, it cannot be reversed!', true, array('project_title'=>$record['title'])); ?>" />
+							<input type="hidden" id="DeleteProjectMsg<?php echo $recId; ?>" value="<?php Utils::e('Are you sure about delete this project? Project:[project_title]. Once deleted, it cannot be reversed!', true, array('project_title'=>$record['title'])); ?>" />
 							<!-- Action Forms -->
 							<form class="hidden" id="EditProjectActionForm<?php echo $recId; ?>" method="post" action="<?php echo $editFormAction; ?>">
 								<input type="hidden" name="project_id" value="<?php echo Utils::encode($recId); ?>" />
@@ -183,7 +183,7 @@ $addAction = '/'.$this->module->id.'/'.$this->id.'/add';
 						</dl>
 						<dl class="record-dl">
 							<dt><?php Utils::e('Is Published?'); ?></dt>
-							<dd><?php echo Utils::eLabel($record['is_published'] ? 'Signed' : 'Not Signed', false); ?></dd>
+							<dd><?php echo Utils::eLabel($record['is_published'] ? 'Signed' : 'Not Signed', $record['is_published']); ?></dd>
 						</dl>
 						<dl class="record-dl">
 							<dt><?php Utils::e('Targets'); ?></dt>

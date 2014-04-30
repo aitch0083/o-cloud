@@ -12,6 +12,16 @@ class Utils {
 	const LBL_DANGER = 'label-danger';
 
 	public static function e($msg, $toEcho=true, $params=null, $yiiCategory='yii'){
+		if(YII_DEBUG){
+			$translationFile = Yii::app()->basePath.'/views/tmp/transalte_tmp.php';
+			$file = file_get_contents($translationFile);
+			if(strpos($file, $msg) === false) {
+			   $fh = fopen($translationFile, 'a');
+			   $stringData = 'Yii::t("'.$yiiCategory.'", "'.$msg.'");'.chr(10);
+			   fwrite($fh, $stringData);
+			   fclose($fh);
+			}
+		}
 		if($toEcho){
 			echo nl2br(Yii::t($yiiCategory, $msg, $params));
 		}else{
