@@ -286,7 +286,7 @@ return array (
   'Scope' => '範圍',
   'Status' => '狀態',
   'Submit' => '送出',
-  'Targets' => '目標',
+  'Targets' => '需求對象',
   'Task' => '任務',
   'Task Number' => '任務數量',
   'Tasks' => '任務',

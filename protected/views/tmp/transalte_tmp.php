@@ -84,3 +84,8 @@ Yii::t("yii", "Created Date");
 Yii::t("yii", "TODO");
 Yii::t("yii", "17 days");
 Yii::t("yii", "Not Signed");
+Yii::t("yii", "Project List");
+Yii::t("yii", "21 days");
+Yii::t("yii", "15 days");
+Yii::t("yii", "<p>Days Left: dum(days)");
+Yii::t("yii", "<p>Budget: num(USD)</p>");
