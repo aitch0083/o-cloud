@@ -18,6 +18,7 @@
  */
 return array (
   'Projects'=>'專案',
+  'Projects'=>'專案',
   '17 days' => '',
   'Category' => '類別',
   'Created Date' => '建立日期',
