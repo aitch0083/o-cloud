@@ -17,7 +17,7 @@
  * NOTE, this file must be saved in UTF-8 encoding.
  */
 return array (
-  'Projects'=>'專案',
+  'Project'=>'專案',
   'Projects'=>'專案',
   '17 days' => '',
   'Category' => '類別',
