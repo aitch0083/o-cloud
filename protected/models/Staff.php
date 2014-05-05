@@ -43,7 +43,6 @@ class Staff extends CActiveRecord{
 	 */
 	public function rules(){
 		return array(
-			array('uNumber', 'required'),
 		);
 	}
 

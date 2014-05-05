@@ -51,12 +51,12 @@ class DefaultController extends Controller{
 								$startDate='', $endDate='', $departmentId='', $fromDepartmentId='',
 								$sortField='Project.id', $sortDir='DESC',
 								$keywords='', $statusCode='ALL', $operator='and',
-								$rendertype='usual'){
+								$rendertype='usual', $isCommited=0){
 
 		//load records
 		$project = new Project();
-		$records = $project->getAll($isDone, $isPublished, $page, $pageSize, $startDate, $endDate, $departmentId, $fromDepartmentId, $sortField, $sortDir, $statusCode, $keywords, $operator);
-		$count = $project->getAll($isDone, $isPublished, $page, $pageSize, $startDate, $endDate, $departmentId, $fromDepartmentId, $sortField, $sortDir, $statusCode, $keywords, $operator, $counting=true);
+		$records = $project->getAll($isDone, $isPublished, $page, $pageSize, $startDate, $endDate, $departmentId, $fromDepartmentId, $sortField, $sortDir, $statusCode, $keywords, $isCommited, $operator);
+		$count = $project->getAll($isDone, $isPublished, $page, $pageSize, $startDate, $endDate, $departmentId, $fromDepartmentId, $sortField, $sortDir, $statusCode, $keywords, $isCommited, $operator, $counting=true);
 
 		$pageNum = ceil( $count / $pageSize );
 
@@ -186,6 +186,7 @@ class DefaultController extends Controller{
 		$department = new Department();
 		$list = $department->getList($startLevel, $parentId);
 		$maxLevel = $department->getMaxLevel();
+		$staffRecord = Yii::app()->user->getState('staff_record');
 
 		if($startLevel > $maxLevel){
 			return;
@@ -215,7 +216,7 @@ class DefaultController extends Controller{
 			$projectTypes = $project->getProjectTypes();
 
 			$crumbs = array(
-				array( 'link'=>$prefix, 'label'=>Utils::e('Project List', false) ),
+				array( 'link'=>'/ticket/default/index?fromDepartmentId='.$staffRecord['BranchId'], 'label'=>Utils::e('Project List', false) ),
 				array( 'link'=>$addAction, 'label'=>Utils::e('Init Project', false) ),
 			);
 
@@ -237,6 +238,7 @@ class DefaultController extends Controller{
 		$accessToken = $this->getAccessToken();
 		$prefix = '/'.$this->module->id.'/'.$this->id;
 		$editAction = $prefix.'/updateField';
+		$staffRecord = Yii::app()->user->getState('staff_record');
 
 		//fetch main project types
 		$projectModel = new Project();
@@ -272,7 +274,7 @@ class DefaultController extends Controller{
 		$tasks = $taskModel->read($id);
 
 		$crumbs = array(
-				array( 'link'=>$prefix, 'label'=>Utils::e('Project List', false) ),
+				array( 'link'=>'/ticket/default/index?fromDepartmentId='.$staffRecord['BranchId'], 'label'=>Utils::e('Project List', false) ),
 				array( 'link'=>$editAction, 'label'=>Utils::e('Edit Project', false) ),
 			);
 
@@ -593,6 +595,10 @@ class DefaultController extends Controller{
 		$updateRlt['msg'] = $updateRlt['rlt'] ? Utils::e('Fields Updated.', false) : Utils::e('Fields Update Failed.' ,false);
 		
 		echo json_encode($updateRlt);	
+	}
+
+	public function actionAudit(){
+
 	}
 
 	public function actionCommit(){

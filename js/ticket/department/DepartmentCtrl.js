@@ -2,7 +2,7 @@ var DepartmentCtrl = {
 		init: function(){
 			//date-pick fields
 			$('.date-field').datepicker({dateFormat:'yy-mm-dd', minDate: new Date()});
-			$('.editable').editable();
+			$('.editable').editable({mode:'inline'});
 			$('#AssignLeaderDialog').dialog({
 				autoOpen: false,
 				title:'Assign Leader',
@@ -39,6 +39,41 @@ var DepartmentCtrl = {
 	    				$('#TargetOperation').val(cmd);
 	    				DepartmentCtrl.actionUpdateLeaderContact();
 	    				break;
+	    			case 'add_bi'://create new business item
+	    				$.ajax({
+	    					url : cmdVal,
+	    					data : {
+	    						title:$('#BizItemTitle').val()
+	    					},
+	    					dataType : 'json',
+	    					type: 'post',
+	    					success : function(result){
+	    						if(result.rlt){
+	    							$('#BizTable').append(result.record);
+	    							$('#BizItemTitle').val('');
+	    							$('.editable').editable({mode:'inline'});
+	    						}
+	    					}
+	    				});
+	    				break;
+	    			case 'delete_BizItem':
+	    				$.confirm($('#DelBizItemMsg'+cmdVal).val(), 'Confirm', function(){
+	    					$.ajax({
+	    						url: $('#DelBizItemUrl').val(),
+	    						data:{
+	    							id: cmdVal
+	    						},
+	    						dataType: 'json',
+	    						type: 'post',
+	    						success: function(result){
+	    							if(result.rlt){
+	    								$('#BizItemRow'+cmdVal).remove();
+	    							}
+	    							$.showDialog(result.msg);
+	    						}
+	    					});
+	    				}, 'ui-state-error', 'ui-icon ui-icon-alert');
+	    				break;
 	    		}//eo switch()
 	    	});//eo .btn event listener
 		},
@@ -51,6 +86,10 @@ var DepartmentCtrl = {
 		},//eo actionAdd
 
 		actionEdit:function(){
+			DepartmentCtrl.init();
+		},
+
+		actionItemList: function(){
 			DepartmentCtrl.init();
 		},
 
@@ -68,8 +107,8 @@ var DepartmentCtrl = {
 					operation: operation,
 					target: target
 				},
-				type:'post',
-				dataType:'json',
+				type: 'post',
+				dataType: 'json',
 				success: function(result){
 					$('#AssignUserRlt').html(result.msg+'<br/> <em>Refreshing...</em>');
 					location.reload();

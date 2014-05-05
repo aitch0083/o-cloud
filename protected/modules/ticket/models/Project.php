@@ -133,7 +133,7 @@ class Project extends CActiveRecord{
 		return $command->queryAll();
 	}
 
-	public function getAll($isDone, $isPublished, $page, $pageSize, $startDate, $endDate, $departmentId, $fromDepartmentId, $sortField, $sortDir, $statusCode, $keywords, $operator='and', $counting=false){
+	public function getAll($isDone, $isPublished, $page, $pageSize, $startDate, $endDate, $departmentId, $fromDepartmentId, $sortField, $sortDir, $statusCode, $keywords, $isCommited, $operator='and', $counting=false){
 
 		if(!in_array($operator, $this->getOperators())){
 			throw new Expcetion('Operator ['.$operator.'] is not available!');
@@ -155,6 +155,11 @@ class Project extends CActiveRecord{
 		if($isPublished){
 			$where[] = 'Project.is_published=:is_published';
 		    $params[':is_published'] = $isPublished;
+		}
+
+		if($isCommited){
+			$where[] = 'Project.is_commited=:is_commited';
+		    $params[':is_commited'] = $isCommited;
 		}
 
 		if($startDate !== ''){

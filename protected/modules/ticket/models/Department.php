@@ -114,7 +114,7 @@ class Department extends CActiveRecord{
 		$command->bindParam(':deptId', $departmentId);
 		$command->bindParam(':userId', $userId);
 		if($command->queryRow()){//return 
-			return true;
+			return self::$db->createCommand('UPDATE `datapub_staffmain` SET `auth_code`=7 WHERE `Id`=:Id')->bindValue(':Id', $userId)->execute();
 		}else{//create one
 			//remove first, only one can be the leader/contact
 			self::$db->createCommand()->delete($taregtTable, 'department_id=:deptId', array(':deptId'=>$departmentId));
@@ -128,7 +128,12 @@ class Department extends CActiveRecord{
 
 	public function removeLeader($departmentId, $userId, $operation='remove_leader'){
 		$taregtTable = ($operation === 'remove_leader' ? 'oc_department_leaders' : 'oc_department_contacts');
-		return self::$db->createCommand()->delete($taregtTable, 'department_id=:deptId and user_id=:userId', array(':deptId'=>$departmentId, ':userId'=>$userId));
+		$result = self::$db->createCommand()->delete($taregtTable, 'department_id=:deptId and user_id=:userId', array(':deptId'=>$departmentId, ':userId'=>$userId));
+		if($result){
+			self::$db->createCommand('UPDATE `datapub_staffmain` SET `auth_code`=7 WHERE `Id`=:Id')->bindValue(':Id', $userId)->execute();
+		}
+
+		return $result;
 	}	
 
 	public function isOpen($departmentId){
@@ -138,6 +143,11 @@ class Department extends CActiveRecord{
 							->where('id=:dept_id', array(':dept_id'=>$departmentId))
 							->limit(1);
 		return $command->queryScalar();
+	}
+
+	public function findBIs($branchId){
+		$command = self::$db->createCommand()->select()->from('oc_project_categories')->where('department_id=:dept_id', array(':dept_id'=>$branchId));
+		return $command->queryAll();
 	}
 
 	public function findKids($departmentId, $maxLayer=5){
@@ -164,6 +174,34 @@ class Department extends CActiveRecord{
 
 			return $kids ? $kids : array($departmentId);
 		}
+	}
+
+	public function addBizItem($deptId, $userId, $title){
+		$command = self::$db->createCommand('INSERT INTO `oc_project_categories` (id, user_id, department_id, title, created, modified) VALUES(null, :userId, :deptId, :title, NOW(), NOW())');
+		$command->bindParam(':deptId', $deptId);
+		$command->bindParam(':userId', $userId);
+		$command->bindParam(':title', $title);
+		if($command->execute()){
+			return Yii::app()->ocdb->getLastInsertID();
+		}
+
+		return false;
+	}
+
+	public function editBizItem($pk, $userId, $title){
+		$command = self::$db->createCommand('UPDATE `oc_project_categories` SET title=:title, user_id=:userId, modified=NOW() WHERE id=:id');
+		$command->bindParam(':userId', $userId);
+		$command->bindParam(':title', $title);
+		$command->bindParam(':id', $pk);
+
+		return $command->execute();
+	}
+
+	public function delBizItem($pk){
+		$command = self::$db->createCommand('DELETE FROM `oc_project_categories` WHERE `id`=:pk');
+		$command->bindParam(':pk', $pk);
+
+		return $command->execute();
 	}
 
 }

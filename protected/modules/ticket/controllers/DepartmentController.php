@@ -126,4 +126,88 @@ class DepartmentController extends Controller{
 		}
  	}
 
+ 	public function actionItemList(){
+ 		$user = Yii::app()->user->getState('staff_record');
+ 		$departmentModel = new Department();
+ 		$businessItems = $departmentModel->findBIs($user['BranchId']); 
+ 		$prefix = '/'.$this->module->id.'/'.$this->id;
+ 		$editAction = $prefix.'/editBizItem';
+ 		$addAction = $prefix.'/addBizItem';
+ 		$delBizItemUrl = $prefix.'/delBizItem';
+
+ 		$this->render('item_list', compact('businessItems', 'editAction', 'addAction', 'delBizItemUrl'));
+  	}
+
+  	public function actionAddBizItem(){
+  		if(!Yii::app()->request->isAjaxRequest){
+			return;
+		}
+
+		$user = Yii::app()->user->getState('staff_record');
+		$title = Yii::app()->request->getPost('title');
+		$departmentModel = new Department();
+		$rlt = $departmentModel->addBizItem($user['BranchId'], $user['Id'], $title);
+
+		$result = array(
+			'rlt' => $rlt,
+			'record' => $rlt ? $this->renderPartial('biz_item', array('item'=>array('id'=>$rlt, 'title'=>$title)), true) : ''
+		);
+
+		echo json_encode($result);
+
+  	}
+
+  	public function actionEditBizItem(){
+  		if(!Yii::app()->request->isAjaxRequest){
+			return;
+		}
+
+		$user = Yii::app()->user->getState('staff_record');
+		$title = Yii::app()->request->getPost('value');
+		$pk = Yii::app()->request->getPost('pk');
+		$departmentModel = new Department();
+		$rlt = $departmentModel->editBizItem($pk, $user['Id'], $title);
+
+		$result = array(
+			'rlt' => $rlt,
+			'record' => $rlt ? $this->renderPartial('biz_item', array('item'=>array('id'=>$pk, 'title'=>$title)), true) : ''
+		);
+
+		echo json_encode($result);
+
+  	}
+
+  	public function actionDelBizItem(){
+  		if(!Yii::app()->request->isAjaxRequest){
+			return;
+		}
+
+		$categoryId = Yii::app()->request->getPost('id');
+		//find existant projects, if there is any, then fail it
+		$projectCount = Project::model()->find(array(
+							'select'=>'id',
+							'condition'=>'category_id=:categoryId',
+							'params'=>array(':categoryId'=>$categoryId)
+						));
+		if($projectCount !== null){
+			echo json_encode(array(
+					  'rlt'=>false,
+					  'msg'=>Utils::e('Unable to remove this item, because there are {projectCount} projects under this.', false, array('{projectCount}'=> $projectCount['count']))
+				   ));
+		}
+
+		$departmentModel = new Department();
+		if($departmentModel->delBizItem($categoryId)){
+			echo json_encode(array(
+					  'rlt'=>true,
+					  'msg'=>Utils::e('Item removed.', false)
+				   ));
+		}else{
+			echo json_encode(array(
+					  'rlt'=>false,
+					  'msg'=>Utils::e('Unable to remove this item! ', false)
+				   ));
+		}
+  	}
+
 }

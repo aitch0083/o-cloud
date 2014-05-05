@@ -20,7 +20,6 @@ class SystemLeftMenu extends AppWidget{
 		$this->render();
 	}
 
-
 	public function render(){
 
 		if($this->items === null){
@@ -48,8 +47,8 @@ class SystemLeftMenu extends AppWidget{
                     </li>';
 	    $optHtml .= '<li>
                         <a href="#" class="menuBtn" cmd="changeWorkspace" cmdVal="/order/sales">'.$this->icon('stats').' Sales Records</a>
-                    </li>';    
-        */                
+                    </li>'; */
+
         $optHtml .= '<li class="active">
                         <a href="#">'.$this->icon('list-alt').' '.Utils::e('Projects', false).' <span class="fa arrow"></span></a>
                         <ul class="nav nav-second-level" style="height: auto;">
@@ -64,7 +63,15 @@ class SystemLeftMenu extends AppWidget{
                             </li>
                         </ul>
                     </li>';                    
-        //Iterate the items
+
+        $user = Yii::app()->user->getState('staff_record');
+        if($user['auth_code'] > 1){
+            $optHtml .= '<li class="active">
+                            <a href="#" class="menuBtn" cmd="changeWorkspace" cmdVal="/ticket/default/index?isCommit=1&isPublished=0">'.$this->icon('list-alt').' '.Utils::e('Audition', false).'</a>
+                            <a href="#" class="menuBtn" cmd="changeWorkspace" cmdVal="/ticket/default/index?isCommit=1&isPublished=1">'.$this->icon('list-alt').' '.Utils::e('Auditted', false).'</a>
+                            <a href="#" class="menuBtn" cmd="changeWorkspace" cmdVal="/ticket/department/itemList">'.$this->icon('list-alt').' '.Utils::e('Business Items', false).'</a>
+                         </li>';                    
+        }
 
         foreach($this->items as $idx=>$item){
         	if(!isset($item['children'])){

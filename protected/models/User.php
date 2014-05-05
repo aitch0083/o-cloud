@@ -145,7 +145,7 @@ class User extends CActiveRecord{
 	public function getStaffRec($uNumber){
 		$connection = Yii::app()->ocdb;
 		$command = $connection->createCommand('SELECT 
-			A.Name, A.ExtNo, A.BranchId, A.auth_code, B.Name AS Branch, C.WorkNote, C.WorkTime, D.CShortName 
+			A.Id, A.Name, A.ExtNo, A.BranchId, A.auth_code, B.Name AS Branch, C.WorkNote, C.WorkTime, D.CShortName 
 			FROM datapub_staffmain A
 			LEFT JOIN oc_departments B ON B.id=A.BranchId 
 			LEFT JOIN datapub_jobdata C ON C.Id=A.JobId 
