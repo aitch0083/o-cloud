@@ -19,7 +19,7 @@ class SystemModalDialog extends AppWidget{
 	}
 
 
-	public function render(){
+	public function render($view=null, $data=null, $return=false){
 		$htmlString = '
 		<div id="SystemDialog" class="modal fade bs-modal-sm" tabindex="-1" role="dialog" aria-labelledby="'.Yii::t('yii', 'Message').'" aria-hidden="true">
 	      <div class="modal-dialog">

@@ -25,7 +25,7 @@ class CalloutBlock extends AppWidget{
 		$this->render();
 	}
 
-	public function render(){
+	public function render($view=null, $data=null, $return=false){
 		
         $htmlString  = '<div class="bs-callout bs-callout-'.( $this->type !== '' ? $this->type : self::INFO).'">';
         $htmlString .= '  <h4>'.$this->title.'</h4>';

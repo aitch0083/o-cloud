@@ -141,7 +141,7 @@ $addAction = '/'.$this->module->id.'/'.$this->id.'/add';
 						<div class="btn-group">
 							<button class="btn btn-xs btn-info tipinfos" cmd="viewRecord" cmdVal="<?php echo $recId; ?>" data-toggle="tooltip" data-placement="bottom" title="<?php Utils::e('View'); ?>"><?php Utils::icon('search'); ?></button>
 							
-							<?php if($record['user_id'] === $user['Id']): ?>
+							<?php if($record['user_id'] === $user['Id'] || $staff['auth_code'] > 256): ?>
 							<button class="btn btn-xs btn-info tipinfos" cmd="editRecord" cmdVal="<?php echo $recId; ?>" data-toggle="tooltip" data-placement="bottom" title="<?php Utils::e('Edit'); ?>"><?php Utils::icon('edit'); ?></button>
 							<button class="btn btn-xs btn-info tipinfos" cmd="deleteRecord" cmdVal="<?php echo $recId; ?>" data-toggle="tooltip" data-placement="bottom" title="<?php Utils::e('Delete'); ?>"><?php Utils::icon('trash'); ?></button>
 							<?php endif; ?>

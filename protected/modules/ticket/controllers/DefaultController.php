@@ -93,7 +93,7 @@ class DefaultController extends Controller{
 										   'records', 'count', 'pageNum', 
 										   'columns', 'runningDepartments', 'fromDepartmentId',
 										   'editFormAction', 'declineFormAction', 'deleteFormAction',
-										   'rendertype'));
+										   'rendertype', 'staff'));
 	}
 
 	public function actionAdd($startLevel=1, $type='peripheral'){

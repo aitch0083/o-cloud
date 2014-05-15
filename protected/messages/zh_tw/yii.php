@@ -270,7 +270,7 @@ return array (
   'Login' => '登入',
   'Logout' => '登出',
   'Message' => '訊息',
-  'My Team\'s Projects' => '隊上專安',
+  'My Team\'s Projects' => '隊上專案',
   'Name the criterions for closing this project.' => '列出本專案結案需要的驗收條件',
   'Not Signed' => '尚未簽核',
   'Note' => '備註',

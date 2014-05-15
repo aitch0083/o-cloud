@@ -30,7 +30,7 @@ class SystemTopMenu extends AppWidget{
 		$this->render();
 	}
 
-	public function render(){
+	public function render($view=null, $data=null, $return=false){
 		
         if($this->items === null){
 			throw new Exception('views.widgets.SystemTopMenu can\'t handle empty record set!' );

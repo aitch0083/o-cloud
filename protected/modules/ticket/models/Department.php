@@ -114,7 +114,7 @@ class Department extends CActiveRecord{
 		$command->bindParam(':deptId', $departmentId);
 		$command->bindParam(':userId', $userId);
 		if($command->queryRow()){//return 
-			return self::$db->createCommand('UPDATE `datapub_staffmain` SET `auth_code`=7 WHERE `Id`=:Id')->bindValue(':Id', $userId)->execute();
+			return self::$db->createCommand('UPDATE `datapub_staffmain` SET `auth_code`=7 WHERE Id=:Id')->bindValue(':Id', $userId)->execute();
 		}else{//create one
 			//remove first, only one can be the leader/contact
 			self::$db->createCommand()->delete($taregtTable, 'department_id=:deptId', array(':deptId'=>$departmentId));
@@ -130,7 +130,7 @@ class Department extends CActiveRecord{
 		$taregtTable = ($operation === 'remove_leader' ? 'oc_department_leaders' : 'oc_department_contacts');
 		$result = self::$db->createCommand()->delete($taregtTable, 'department_id=:deptId and user_id=:userId', array(':deptId'=>$departmentId, ':userId'=>$userId));
 		if($result){
-			self::$db->createCommand('UPDATE `datapub_staffmain` SET `auth_code`=7 WHERE `Id`=:Id')->bindValue(':Id', $userId)->execute();
+			self::$db->createCommand('UPDATE `datapub_staffmain` SET `auth_code`=1 WHERE `Id`=:Id')->bindValue(':Id', $userId)->execute();
 		}
 
 		return $result;

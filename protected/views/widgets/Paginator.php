@@ -20,7 +20,7 @@ class Paginator extends AppWidget{
 		$this->render();
 	}
 
-	public function render(){
+	public function render($view=null, $data=null, $return=false){
 		
 		if($this->config === null){
 			throw new Expception('views.widgets.Paginator can\'t handle empty pagination requirement!');

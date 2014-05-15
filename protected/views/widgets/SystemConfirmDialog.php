@@ -19,7 +19,7 @@ class SystemConfirmDialog extends AppWidget{
 		$this->render();
 	}
 
-	public function render(){
+	public function render($view=null, $data=null, $return=false){
 
 		$htmlString = '<div id="ConfirmDialog" title=""><div id="ConfirmDialogContent"></div></div>';
    		echo $htmlString;
