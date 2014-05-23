@@ -109,3 +109,23 @@ Yii::t("yii", "台灣B2C市場部");
 Yii::t("yii", "中國B2C市場部");
 Yii::t("yii", "品牌商品化妝部");
 Yii::t("yii", "11 days");
+Yii::t("yii", "6 days");
+Yii::t("yii", "24 days");
+Yii::t("yii", "8 days");
+Yii::t("yii", "Field Updated.");
+Yii::t("yii", "行政部");
+Yii::t("yii", "財務部");
+Yii::t("yii", "法務室");
+Yii::t("yii", "深圳辦公室");
+Yii::t("yii", "Task Deleted");
+Yii::t("yii", "Criterions");
+Yii::t("yii", "Are you sure about accepting this project? 
+Project:[【資訊室】NAS主機] 
+ Once accepted, it cannot be reversed!");
+Yii::t("yii", "Are you sure about declining this project? 
+Project:[【資訊室】NAS主機] 
+ Once declined, it cannot be reversed!");
+Yii::t("yii", "Are you sure about delete this project? 
+Project:[【資訊室】NAS主機] 
+ Once deleted, it cannot be reversed!");
+Yii::t("yii", "Leader removed.");
